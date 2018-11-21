@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\libsasm\Assertion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Label.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\OpcodeDefs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\ParserContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Section.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\TextBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Token.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Tokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\TokenizerTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\TokenList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\TokenStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\UnresolvedReference.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Assembler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Util.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasm\Output.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\libsasm\Assertion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Label.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Op.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\OpcodeDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\ParserContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Section.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\TextBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Token.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Tokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\TokenList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\TokenStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\UnresolvedReference.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\AddrMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Assembler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasm\Output.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
