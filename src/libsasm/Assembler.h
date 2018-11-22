@@ -2,6 +2,7 @@
 #define SASM_ASSEMBLER_H_INCLUDED
 
 #include <stdint.h>
+#include <limits.h>
 #include <vector>
 #include <map>
 #include <stack>
