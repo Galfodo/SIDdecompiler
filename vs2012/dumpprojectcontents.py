@@ -13,7 +13,7 @@ def getprojectfiles(filename):
 def dumplist(l):
 	for i in l:
 		print ' \\'
-		print str('  "' + i + '"').ljust(60),
+		print str('' + i + '').ljust(60),
 	print
 	print
 		
@@ -21,14 +21,14 @@ def dumpprojectfiles(filename):
 		srcs,hdrs,deps = getprojectfiles(filename)
 		deps = [d.replace('.vcxproj', '') for d in deps]
 		prjname = filename.replace('.vcxproj', '').upper()
-		print str(prjname + '_SOURCES = ').ljust(60),
-		dumplist(srcs)
+		print str(prjname + '_OBJECTS = ').ljust(60),
+		dumplist([o.replace('.cpp', '.o').replace('.c', '.o') for o in srcs])
 		if len(hdrs):
 			print str(prjname + '_HEADERS = ').ljust(60),
 			dumplist(hdrs)
 		if len(deps):
 			print str(prjname + '_DEPENDENCIES = ').ljust(60),
-			dumplist(deps)
+			dumplist([d + '.a' for d in deps])
 		print
 
 def main():
