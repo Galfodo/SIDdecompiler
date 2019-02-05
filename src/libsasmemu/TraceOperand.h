@@ -276,7 +276,10 @@ struct OperandTraceState {
   std::set<std::pair<int, int> >
                             m_RelocPairs;
   std::set<std::pair<TraceNodePtr, TraceNodePtr> >
+  //std::vector<std::pair<TraceNodePtr, TraceNodePtr> >
                             m_TraceNodePairs;
+  std::vector<std::pair<TraceNodePtr, TraceNodePtr> >
+                            m_TraceNodePairsSorted;
   std::vector<RelocationTableDef>
                             m_RelocationTables;
   std::deque<TraceNodePtr>  m_Stack;

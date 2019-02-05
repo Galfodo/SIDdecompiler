@@ -73,6 +73,9 @@ void Disassembler::parseMemAccessMap(MemAccessMap* map) {
 }
 
 Disassembler::Label* Disassembler::getLabel(int addr) {
+  if (addr == 0x3700 || addr == 0x3800) {
+    int debug = 0;
+  }
   auto it = m_Labels.find(addr);
   if (it == m_Labels.end()) {
     return NULL;
@@ -342,6 +345,9 @@ Disassembler::AddressTable* Disassembler::addWordAddressTable(const char* label_
 }
 
 Disassembler::AddressTable* Disassembler::addRelocAddress(const char* label, int addrlo, int addrhi) {
+  if (getByteAt(addrlo) == 0 && getByteAt(addrhi) == 0x37) {
+    int debug = 0;
+  }
   return addAddressTable(label, addrlo, addrhi, 1);
 }
 
