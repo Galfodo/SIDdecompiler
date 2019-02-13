@@ -14,7 +14,7 @@ void TokenizerTest();
 using namespace SASM;
 
 static void OutputString(const char* str) {
-  int debug = 0;
+  //int debug = 0;
 }
 
 const char* nextArg(int& currentIndex, int argc, char** argv, bool allowNone) {

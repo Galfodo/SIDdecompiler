@@ -37,6 +37,41 @@ int MemAccessMap::getAccessType(int addr) {
 static const char*
   s_digits= "0123456789ABCDEF";
 
+char
+MemAccessMap::getAccessTypePrintable(int accesstype) {
+  char usage;
+  switch(accesstype) {
+  case UNTOUCHED:
+    usage = '?';
+    break;
+  case READ:
+    usage = 'r';
+    break;
+  case WRITE:
+    usage = 'w';
+    break;
+  case (READ|WRITE):
+    usage = '+';
+    break;
+  case EXECUTE:
+    usage = 'x';
+    break;
+  case (EXECUTE|WRITE):
+    usage = '#';
+    break;
+  case OPERAND:
+    usage = 'o';
+    break;
+  case (OPERAND|WRITE):
+    usage = '_';
+    break;
+  default:
+    assert(accesstype < 16);
+    usage = s_digits[accesstype];
+  }
+  return usage;
+}
+
 Hue::Util::String MemAccessMap::printMap(int addr, int lastaddr) {
   int size = lastaddr - addr + 1;
   size += addr & (ROW_SIZE - 1);
@@ -51,37 +86,7 @@ Hue::Util::String MemAccessMap::printMap(int addr, int lastaddr) {
     row[ROW_SIZE] = '\0';
     for (int x = 0; x < ROW_SIZE; ++x) {
       auto data = m_Data[offset + i * ROW_SIZE + x];
-      char usage;
-      switch(data) {
-      case UNTOUCHED:
-        usage = '?';
-        break;
-      case READ:
-        usage = 'r';
-        break;
-      case WRITE:
-        usage = 'w';
-        break;
-      case (READ|WRITE):
-        usage = '+';
-        break;
-      case EXECUTE:
-        usage = 'x';
-        break;
-      case (EXECUTE|WRITE):
-        usage = '#';
-        break;
-      case OPERAND:
-        usage = 'o';
-        break;
-      case (OPERAND|WRITE):
-        usage = '_';
-        break;
-      default:
-        assert(data < 16);
-        usage = s_digits[data];
-      }
-      row[x] = usage;
+      row[x] = getAccessTypePrintable(data);
     }
     sData.appendf("%$%04x: %s\n", addr + i * ROW_SIZE, row);
   }

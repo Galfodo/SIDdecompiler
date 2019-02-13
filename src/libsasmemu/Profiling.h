@@ -25,6 +25,7 @@ struct MemAccessMap {
                               ~MemAccessMap();
   int                         getAccessType(int address);
   Hue::Util::String           printMap(int firstaddr, int lastaddr);
+  static char                 getAccessTypePrintable(int accesstype);
   void                        dump();
   inline void                 recordAccess(int addr, int accesstype) {
                                 if (addr >= m_Address && addr < m_Address + m_Size) {

@@ -172,6 +172,9 @@ private:
                               ++s_AliveCount;
                               s_MaxAliveCount = s_AliveCount > s_MaxAliveCount ? s_AliveCount : s_MaxAliveCount;
 #endif
+                             //if (addr == 0x37d4) {
+                             //  int debug = 0;
+                             //}
                               m_Left = left;
                               if (right) {
                                 assert(left);

@@ -23,7 +23,7 @@ void OperandTraceState::addTraceNodePair(TraceNode* lo, TraceNode* hi) {
   assert(hi);
   auto it = m_TraceNodePairs.find(std::make_pair(lo, hi));
   if (it != m_TraceNodePairs.end()) {
-    int debug = 0;
+    //int debug = 0;
   } else {
     m_TraceNodePairs.insert(std::make_pair(lo, hi));
     m_TraceNodePairsSorted.push_back(std::make_pair(lo, hi));
@@ -241,9 +241,9 @@ struct ExecuteTracer2 : OperandTracer {
       effectiveAddr = emu.ZEROPAGEY();
       break;
     }
-    if (effectiveAddr == 0x3700) {
-      int debug = 0;
-    }
+    //if (effectiveAddr == 0x3700) {
+    //  int debug = 0;
+    //}
     if (def->m_AddrMode == AddrMode::IMM) {
       switch (def->m_Op) {
       case Op::LDA:
@@ -334,9 +334,9 @@ struct ExecuteTracer2 : OperandTracer {
       goto done;
     }
     if (opsize == 2) {
-      if (opaddr == 0x3700) {
-        int debug = 0;
-      }
+      //if (opaddr == 0x3700) {
+      //  int debug = 0;
+      //}
       getOrCreateAddressTraceABS(opaddr, false);
     } else {
       assert(opsize == 1);
@@ -366,9 +366,9 @@ void OperandTraceState::addRelocAddr(std::pair<int, int> lohi) {
 }
 
 TraceNode* OperandTraceState::lookupOrigin(int addr) {
-  if (addr == 0x3700) {
-    int debug = 0;
-  }
+  //if (addr == 0x3700) {
+  //  int debug = 0;
+  //}
   return m_CurrentTraces[addr].get();
 }
 
@@ -376,6 +376,21 @@ template<typename T>
 struct Histogram
 {
 };
+
+static void PrintNode(C64MachineState& emu, TraceNode* node, int level = 0) {
+  int accesstype = emu.debugger().memAccessMap()->getAccessType(node->m_Address);
+  char flags = MemAccessMap::getAccessTypePrintable(accesstype);
+  Hue::Util::String prefix;
+  prefix.center(level * 4);
+  prefix.appendf("N:$%04X '%c'\n", node->m_Address, flags);
+  printf("%s", prefix.c_str());
+  if (node->m_Left.get()) {
+    PrintNode(emu, node->m_Left.get(), level + 1);
+  }
+  if (node->m_Right.get()) {
+    PrintNode(emu, node->m_Right.get(), level + 1);
+  }
+}
 
 void OperandTraceState::buildRelocationTables(C64MachineState& emu, int relocRangeStart, int relocRangeSize, bool bridgeGaps) {
   auto pairs = m_TraceNodePairsSorted;
@@ -388,10 +403,28 @@ void OperandTraceState::buildRelocationTables(C64MachineState& emu, int relocRan
     assert(pcLoNode);
     assert(pcHiNode);
 
+    //if (iNode == 0x79) {
+    //  printf("LO:");
+    //  PrintNode(emu, pcLoNode);
+    //  printf("HI:");
+    //  PrintNode(emu, pcHiNode);
+    //}
+
     std::set<int> loNodes;
     std::set<int> hiNodes;
     pcLoNode->getLeafNodes(loNodes);
     pcHiNode->getLeafNodes(hiNodes);
+    for (auto lo_it = loNodes.begin(); lo_it != loNodes.end();) {
+      auto hi_it = std::find(hiNodes.begin(), hiNodes.end(), *lo_it);
+      if (hi_it != hiNodes.end()) {
+        // If the same address contributes to both lo- and hi-byte of the address,
+        // it is definitely not relocatable, so remove it from consideration
+        lo_it = loNodes.erase(lo_it);
+        hi_it = hiNodes.erase(hi_it);
+      } else {
+        ++lo_it;
+      }
+    }
     auto m = emu.debugger().memAccessMap();
     assert(m);
     if (loNodes.size() > 1 || hiNodes.size() > 1) {
@@ -448,9 +481,9 @@ void OperandTraceState::buildRelocationTables(C64MachineState& emu, int relocRan
         //  }
         //}
         int effectiveaddr = emu.m_Mem[originLo] | (emu.m_Mem[originHi] << 8);
-        if (effectiveaddr == 0x3700) {
-          int debug = 0;
-        }
+        //if (effectiveaddr == 0x3700) {
+        //  int debug = 0;
+        //}
         //if (effectiveaddr < 0xd000 || effectiveaddr >= 0xe000) {
           addRelocAddr(std::make_pair(originLo, originHi));
         //} else {
