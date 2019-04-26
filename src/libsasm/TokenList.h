@@ -23,7 +23,7 @@ public:
   Hue::Util::String   join(const char* separator) const;
   inline Token const& at(int pos) const { return m_Tokens.at(pos + m_ReadPos); }
   inline Token&       at(int pos) { return m_Tokens.at(pos + m_ReadPos); }
-  inline bool         empty() const { return m_ReadPos >= m_Tokens.size(); }
+  inline bool         empty() const { return m_ReadPos >= (int)m_Tokens.size(); }
   inline int          size() const { int siz = (int)m_Tokens.size() - m_ReadPos; return siz > 0 ? siz : 0; }
   inline void         push_back(Token const& token) { m_Tokens.push_back(token); }
   void                clear();

@@ -10,6 +10,7 @@
 #include "Output.h"
 #include <chrono>
 #include <stack>
+#include <algorithm>
 
 namespace SASM {
 
@@ -64,7 +65,7 @@ std::vector<byte> Assembler::assemble_file(const char* filename) {
 }
 
 const char* Assembler::version() {
-  return "SASM v0.2 (C) 2017 Stein Pedersen/Prosonix";
+  return "SASM v0.3 (C) 2017-2019 Stein Pedersen/Prosonix";
 }
 
 std::vector<byte> Assembler::assemble(const char* source, const char* filename) {
@@ -77,6 +78,8 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
   std::vector<byte> result;
 
   m_LineNumber = 0;
+
+  addFileInfo(source, filename);
 
   Token
     token;
@@ -93,6 +96,8 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
 
   TokenList
     currentTokens;
+
+
 
   while (stream.next(token)) {
     currentTokens.clear();
@@ -130,7 +135,7 @@ void Assembler::resolveAll()
   while (unresolvedReferences.size() > 0 && unresolvedReferences.size() != prev_unresolved_count)
   {
     std::vector<UnresolvedReference*> still_unresolved;
-    for (int i = 0; i < unresolvedReferences.size(); ++i)
+    for (int i = 0; i < (int)unresolvedReferences.size(); ++i)
     {
       UnresolvedReference* u = unresolvedReferences[i];
 #ifdef _DEBUG
@@ -163,7 +168,7 @@ void Assembler::resolveAll()
     unresolvedReferences = still_unresolved;
     still_unresolved.clear();
   }
-  for (int i = 0; i < unresolvedReferences.size(); ++i)
+  for (int i = 0; i < (int)unresolvedReferences.size(); ++i)
   {
     UnresolvedReference* u = unresolvedReferences[i];
     assert(u->m_SectionID == 0); // TODO!
@@ -798,10 +803,12 @@ void Assembler::writeByte(byte value)
 
 void Assembler::writeByteAt(byte value, int64_t position)
 {
+  assert(position >= 0);
+  assert(position <= UINT_MAX);
   while (writeOffset() <= position) {
     writeByte(0);
   }
-  currentSection().m_Data.at(position) = value;
+  currentSection().m_Data[(unsigned)position] = value;
 }
 
 void Assembler::writeWord(word value) {
@@ -1169,10 +1176,73 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
 }
 
 void Assembler::fprintErrors(FILE* file, int max_errors) {
-  for (auto i = 0; i < m_Errors.size() && i < max_errors; ++i) {
+  for (int i = 0; i < (int)m_Errors.size() && i < max_errors; ++i) {
     sasm_fprintf(file, "%s\n", m_Errors[i].c_str());
   }
   sasm_fprintf(file, "%d errors.\n", (int)m_Errors.size());
+}
+
+void Assembler::addFileInfo(const char* filename, const char* contents) {
+  InputFileInfo info;
+  info.m_Filename = filename;
+#if SASM_ENABLE_DEBUGINFO
+  info.m_Begin    = contents;
+  info.m_End      = contents + strlen(contents);
+#endif
+  m_InputFiles.push_back(info);
+}
+
+bool                                              
+Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column, Token const& token) {
+#if SASM_ENABLE_DEBUGINFO
+  for (int i = 0; i < (int)m_InputFiles.size(); ++i) {
+    InputFileInfo& inp = m_InputFiles[i];
+    if (token.m_pzTokenStart >= inp.m_Begin && token.m_pzTokenStart < inp.m_End) {
+      assert(token.m_pzTokenEnd <= inp.m_End);
+      if (inp.m_Lines.empty()) {
+        const char* pzWork = inp.m_Begin;
+        do {
+          inp.m_Lines.push_back(pzWork);
+          while (pzWork < inp.m_End && *pzWork != '\n') {
+            ++pzWork;
+          }
+          if (pzWork < inp.m_End) {
+            ++pzWork;
+          }
+        } while (pzWork < inp.m_End);
+      }
+      auto it = std::lower_bound(inp.m_Lines.begin(), inp.m_Lines.end(), token.m_pzTokenStart);
+      assert(it != inp.m_Lines.end());
+      inputfileID = i;
+      linenumber  = (int)(it - inp.m_Lines.begin()) + 1;
+      column      = (int)(token.m_pzTokenStart - *it);
+      return true;
+    }
+  }
+#else
+  inputfileID = -1;
+  linenumber  = 0;
+  column      = 0;
+#endif
+  return false;
+}
+
+Assembler::InputFileInfo&                                    
+Assembler::getInputFileInfo(int inputFileID) {
+  assert(inputFileID < (int)m_InputFiles.size());
+  if (inputFileID < (int)m_InputFiles.size()) {
+    return m_InputFiles[inputFileID];
+  } else {
+    static InputFileInfo 
+      no_file;
+
+    no_file.m_Filename  = "<no file>";
+#if SASM_ENABLE_DEBUGINFO
+    no_file.m_Begin     = "";
+    no_file.m_End       = no_file.m_Begin;
+#endif
+    return no_file;
+  }
 }
 
 }

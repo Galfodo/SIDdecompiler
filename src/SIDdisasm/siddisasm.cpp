@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
       if (!allowMultipleInstancesOption.Value) {
         if (hubbardRipper->m_Instances.size() > 1)
           printf("Processing instance 1 only.");
-        subtunes = (int)hubbardRipper->m_Instances[0].m_Songs.size();
+        subtunes = (SASM::word)hubbardRipper->m_Instances[0].m_Songs.size();
       }
       printf("\n");
     }

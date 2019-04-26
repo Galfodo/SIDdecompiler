@@ -12,6 +12,8 @@
 #include "AddrMode.h"
 #include "Assertion.h"
 
+#define SASM_ENABLE_DEBUGINFO 1
+
 namespace SASM {
 
 class Label;
@@ -22,6 +24,17 @@ class Assertion;
 
 class Assembler {
 public:
+  struct InputFileInfo {
+    Hue::Util::String m_Filename;
+#if SASM_ENABLE_DEBUGINFO
+    char const*       m_Begin;
+    char const*       m_End;
+    std::vector<const char*>
+                      m_Lines;
+#endif
+  };
+  typedef int InputFileID;
+
   static const char*                                version();
                                                     Assembler();
                                                     ~Assembler();
@@ -67,7 +80,11 @@ public:
   byte                                              calculateBranch(int64_t source, int64_t target, const char* filename, int linenumber);
   void                                              writeInstructionOperand(int64_t pc, int64_t offset, int64_t operand, AddrMode addrMode, const char* filename, int linenumber);
   void                                              writePetsciiStringToMemory(Token const& token, bool isAscii);
+  void                                              addFileInfo(const char* filename, const char* contents);
+  bool                                              resolveTokenOrigin(int& inputfileID, int& linenumber, int& column, Token const& token);
+  InputFileInfo&                                    getInputFileInfo(int inputFileID);
 
+  std::vector<InputFileInfo>                        m_InputFiles;
   Section*                                          m_CurrentSection;
   std::vector<Section*>                             m_Sections;
   std::map<Hue::Util::String, Label*>               m_Labels;
