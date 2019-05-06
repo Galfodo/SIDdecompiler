@@ -33,7 +33,6 @@ public:
                       m_Lines;
 #endif
   };
-  typedef int InputFileID;
 
   static const char*                                version();
                                                     Assembler();
@@ -59,7 +58,7 @@ public:
   const char*                                       getAnonymousLabel(Hue::Util::String& labelname, int offset, char suffix);
   void                                              addAnonymousLabel(int64_t value, char suffix);
   void                                              resolveAll();
-  void                                              recordError(Hue::Util::String const& msg, const char* filename, int line, bool record = true);
+  void                                              recordError(Hue::Util::String const& msg, InputFileID file_id, TextSpan const& span, bool record = true);
   inline Section&                                   currentSection() { return *m_CurrentSection; }
   inline Section const&                             currentSection() const { return *m_CurrentSection; }
   Section*                                          getOrCreateSection(const char* name, Section::Attributes attr);
@@ -77,12 +76,15 @@ public:
   void                                              writeWord(word value);
   void                                              writeByteAt(byte value, int64_t offset);
   void                                              writeWordAt(word value, int64_t offset);
-  byte                                              calculateBranch(int64_t source, int64_t target, const char* filename, int linenumber);
-  void                                              writeInstructionOperand(int64_t pc, int64_t offset, int64_t operand, AddrMode addrMode, const char* filename, int linenumber);
+  byte                                              calculateBranch(int64_t source, int64_t target, InputFileID file_id, TextSpan const& span);
+  void                                              registerDebugInfoRange(int64_t pc, InputFileID file_id, TextSpan const& span);
+  void                                              writeInstruction(int opcode, InputFileID file_id, TextSpan const& span);
+  void                                              writeInstructionOperand(int64_t pc, int64_t offset, int64_t operand, AddrMode addrMode, InputFileID file_id, TextSpan const& span);
   void                                              writePetsciiStringToMemory(Token const& token, bool isAscii);
-  void                                              addFileInfo(const char* filename, const char* contents);
-  bool                                              resolveTokenOrigin(int& inputfileID, int& linenumber, int& column, Token const& token);
+  InputFileID                                       addFileInfo(const char* filename, const char* contents);
+  bool                                              resolveTokenOrigin(int& inputfileID, int& linenumber, int& column_begin, int& column_end, Token const& token);
   InputFileInfo&                                    getInputFileInfo(int inputFileID);
+  const char*                                       getInputFileName(int inputFileID);
 
   std::vector<InputFileInfo>                        m_InputFiles;
   Section*                                          m_CurrentSection;
@@ -97,11 +99,12 @@ public:
   int                                               m_AnonLabelIndexFwd;
   int                                               m_AnonLabelIndexBwd;
   int                                               m_LineNumber;
-  Hue::Util::String                                 m_FileName;
+  InputFileID                                       m_CurrentFileID;
   int64_t                                           m_PC;
   int64_t                                           m_ORG;
   Hue::Util::String                                 m_Source;
   time_t                                            m_AssemblyTime;
+  bool                                              m_CreateDebugInfo;
 };
 
 }

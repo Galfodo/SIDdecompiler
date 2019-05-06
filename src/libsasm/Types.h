@@ -20,6 +20,20 @@ struct DestructibleBase {
   virtual void Destroy() = 0;
 };
 
+typedef int InputFileID;
+
+struct TextSpan {
+  int m_Line;
+  int m_ColumnBegin;
+  int m_ColumnEnd;
+
+  TextSpan(int line, int column_begin = 0, int column_end = -1) :
+    m_Line(line),
+    m_ColumnBegin(column_begin),
+    m_ColumnEnd(column_end) {
+  }
+};
+
 }
 
 #endif

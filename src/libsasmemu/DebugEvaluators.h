@@ -70,15 +70,15 @@ namespace DebugEvaluators {
 }
 
 struct AssertEvaluator : public TraceEvaluator {
-                          AssertEvaluator(DBExpression* expr, Hue::Util::String const& text, Hue::Util::String const& filename, int line);
+                          AssertEvaluator(DBExpression* expr, Hue::Util::String const& text, InputFileID file_id, TextSpan const& span);
                           ~AssertEvaluator();
   virtual int             eval(C64MachineState& state, int addr) override;
   static AssertEvaluator* parseAssertion(Assertion* assertion);
 private:
   DBExpression*           m_Expression;
   Hue::Util::String       m_Text;
-  Hue::Util::String       m_FileName;
-  int                     m_Line;
+  InputFileID             m_FileID;
+  TextSpan                m_Span;
 };
 
 }

@@ -13,11 +13,11 @@ public:
   int               m_SectionID;
   AddrMode          m_AddrMode;
   TokenList         m_ExpressionTokens;
-  const char*       m_FileName;
-  int               m_Line;
+  InputFileID       m_FileID;
+  TextSpan          m_Span;
   Hue::Util::String m_Label;
 
-              UnresolvedReference(int sectionID, int64_t pc, int64_t offset, AddrMode addrmode, const char* filename, int line);
+              UnresolvedReference(int sectionID, int64_t pc, int64_t offset, AddrMode addrmode, InputFileID file_id, TextSpan const& span);
 };
 
 }

@@ -9,13 +9,13 @@ namespace SASM {
 class Label {
 public:
   int64_t       m_Offset;
-  const char*   m_FileName;
-  int           m_Line;
+  InputFileID   m_FileID;
+  TextSpan      m_Span;
   int           m_SectionID;
   char          m_Name[1];
 
-  static Label* create(Token const& nameToken, int64_t offset, const char* filename, int line, int sectionID);
-  static Label* create(const char* name, int64_t offset, const char* filename, int line, int sectionID);
+  static Label* create(Token const& nameToken, int64_t offset, InputFileID file_id, TextSpan const& span, int sectionID);
+  static Label* create(const char* name, int64_t offset, InputFileID file_id, TextSpan const& span, int sectionID);
   static void   destroy(Label* label);
 
 private:

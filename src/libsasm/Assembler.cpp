@@ -46,6 +46,7 @@ void Assembler::init() {
   m_PC = 0;
   m_ORG = 0;
   m_AssemblyTime = 0;
+  m_CreateDebugInfo = false;
 }
 
 std::vector<byte> Assembler::assemble_string(const char* str) {
@@ -74,12 +75,12 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
   auto starttime = std::chrono::high_resolution_clock::now();
   m_AssemblyTime = 0;
   m_Source.assign(source);
-  m_FileName = filename;
+
   std::vector<byte> result;
 
   m_LineNumber = 0;
 
-  addFileInfo(source, filename);
+  m_CurrentFileID = addFileInfo(source, filename);
 
   Token
     token;
@@ -120,7 +121,7 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
   resolveAll();
   auto endtime = std::chrono::high_resolution_clock::now();
   auto deltatime = std::chrono::duration<double, std::milli>(endtime - starttime);
-  sasm_printf("%s linecount: %d\n", m_FileName.c_str(), m_LineNumber);
+  sasm_printf("%s linecount: %d\n", getInputFileName(m_CurrentFileID), m_LineNumber);
   //sasm_printf("%d error(s) in %.03f milliseconds\n", (int)m_Errors.size(), deltatime);
   if (m_Errors.size() == 0) {
     result = currentSection().m_Data;
@@ -161,7 +162,7 @@ void Assembler::resolveAll()
       } 
       else
       {
-        writeInstructionOperand(u->m_PC, u->m_Offset, value, u->m_AddrMode, u->m_FileName, u->m_Line);
+        writeInstructionOperand(u->m_PC, u->m_Offset, value, u->m_AddrMode, u->m_FileID, u->m_Span);
       }
     }
     prev_unresolved_count = (int)unresolvedReferences.size();
@@ -175,11 +176,11 @@ void Assembler::resolveAll()
     int64_t value = evaluateExpression(u->m_ExpressionTokens, u->m_Offset, true);
     if (value < 0)
     {
-      recordError(Hue::Util::String::static_printf("Unresolved reference: '%s'", u->m_ExpressionTokens.toString().c_str()), u->m_FileName, u->m_Line, true);
+      recordError(Hue::Util::String::static_printf("Unresolved reference: '%s'", u->m_ExpressionTokens.toString().c_str()), u->m_FileID, u->m_Span, true);
     }
     else
     {
-      writeInstructionOperand(u->m_PC, u->m_Offset, value, u->m_AddrMode, u->m_FileName, u->m_Line);
+      writeInstructionOperand(u->m_PC, u->m_Offset, value, u->m_AddrMode, u->m_FileID, u->m_Span);
     }
   }
 }
@@ -502,7 +503,7 @@ int64_t eval(Assembler* assembler, bool& parse_error, TokenList& tokens, int64_t
           parse_error = true; // not really...
           auto msg = Hue::Util::String::static_printf("Undefined symbol '%s'", token.toString().c_str());
           if (report_errors) {
-            assembler->recordError(msg, assembler->m_FileName, assembler->m_LineNumber, report_errors);
+            assembler->recordError(msg, assembler->m_CurrentFileID, assembler->m_LineNumber, report_errors);
           }
           return -1;
         }
@@ -564,7 +565,7 @@ int64_t Assembler::evaluateExpressionImpl(bool& parse_error, TokenList& tokens, 
 #endif
   parse_error = false;
   if (tokens.size() == 0) {
-    recordError("empty expression", m_FileName, m_LineNumber, true);
+    recordError("empty expression", m_CurrentFileID, m_LineNumber, true);
     parse_error = true;
     return -1;
   }
@@ -582,7 +583,7 @@ int64_t Assembler::evaluateExpressionImpl(bool& parse_error, TokenList& tokens, 
     else
     {
       if (report_errors) {
-        recordError(Hue::Util::String::static_printf("Unknown identifier: %s", labelname.c_str()).c_str(), m_FileName, m_LineNumber, report_errors);
+        recordError(Hue::Util::String::static_printf("Unknown identifier: %s", labelname.c_str()).c_str(), m_CurrentFileID, m_LineNumber, report_errors);
       }
       parse_error = true;
       return -1;
@@ -605,7 +606,7 @@ bool Assembler::parseConditionals(TokenList& tokens)
     int64_t condition = evaluateExpression(tmptokens, m_PC, true);
     if (condition < 0)
     {
-      recordError("Error in conditional expression", m_FileName, m_LineNumber, true);
+      recordError("Error in conditional expression", m_CurrentFileID, m_LineNumber, true);
     }
     directiveIf(condition > 0);
     return true;
@@ -618,7 +619,7 @@ bool Assembler::parseConditionals(TokenList& tokens)
     }
     else
     {
-      recordError("Error in conditional expression", m_FileName, m_LineNumber, true);
+      recordError("Error in conditional expression", m_CurrentFileID, m_LineNumber, true);
     }
     return true;
   }
@@ -630,7 +631,7 @@ bool Assembler::parseConditionals(TokenList& tokens)
     }
     else
     {
-      recordError("Error in conditional expression", m_FileName, m_LineNumber, true);
+      recordError("Error in conditional expression", m_CurrentFileID, m_LineNumber, true);
     }
     return true;
   }
@@ -659,7 +660,7 @@ void Assembler::directiveElse()
 {
   if (m_ConditionStack.size() <= 1)
   {
-    recordError(".else without matching .if", m_FileName, m_LineNumber, true);
+    recordError(".else without matching .if", m_CurrentFileID, m_LineNumber, true);
   }
   bool condition = !m_ConditionStack.top();
   m_ConditionStack.pop();
@@ -670,14 +671,14 @@ void Assembler::directiveEndif()
 {
   if (m_ConditionStack.size() <= 1)
   {
-    recordError(".endif without matching .if", m_FileName, m_LineNumber, true);
+    recordError(".endif without matching .if", m_CurrentFileID, m_LineNumber, true);
   }
   m_ConditionStack.pop();
 }
 
-void Assembler::recordError(Hue::Util::String const& msg, const char* filename, int line, bool record) {
+void Assembler::recordError(Hue::Util::String const& msg, InputFileID file_id, TextSpan const& span, bool record) {
   if (record) {
-    m_Errors.push_back(Hue::Util::String::static_printf("%s(%d): error : %s", filename, line, msg.c_str()));
+    m_Errors.push_back(Hue::Util::String::static_printf("%s(%d): error : %s", getInputFileName(file_id), span.m_Line, msg.c_str()));
   }
 }
 
@@ -702,11 +703,11 @@ void Assembler::addLabel(const char* name, int64_t value) {
   if (label) {
     recordError(Hue::Util::String::static_printf("Multiply defined symbol '%s' first defined in file '%s' line %d.\n", 
       name, 
-      label->m_FileName, label->m_Line
-    ).c_str(), m_FileName.c_str(), m_LineNumber);
+      label->m_FileID, label->m_Span
+    ).c_str(), m_CurrentFileID, m_LineNumber);
   } else {
     assert(findLabel(name) == NULL);
-    Label* label = Label::create(name, value, m_FileName, m_LineNumber, m_CurrentSection->m_ID);
+    Label* label = Label::create(name, value, m_CurrentFileID, m_LineNumber, m_CurrentSection->m_ID);
     m_Labels.insert(std::make_pair(name, label));
     assert(findLabel(name) != NULL);
   }
@@ -765,7 +766,7 @@ void Assembler::addAnonymousLabel(int64_t value, char suffix) {
 void Assembler::addUnresolved(const char* expression, int64_t m_PC, int64_t offset, AddrMode addrMode) {
   TokenList list;
   list.push_back(Token(expression, Token::Identifier));
-  UnresolvedReference* unresolved = new UnresolvedReference(this->currentSection().m_ID, m_PC, offset, addrMode, m_FileName, m_LineNumber);
+  UnresolvedReference* unresolved = new UnresolvedReference(this->currentSection().m_ID, m_PC, offset, addrMode, m_CurrentFileID, m_LineNumber);
   unresolved->m_ExpressionTokens.push_back(Token(expression, Token::Identifier));
   m_Unresolved.push_back(unresolved);
 }
@@ -776,7 +777,7 @@ void Assembler::addUnresolved(TokenList& expressiontokens, int64_t m_PC, int64_t
   if (isAnonymousLabelReference(labelname, expressiontokens)) {
     addUnresolved(labelname.c_str(), m_PC, offset, addrMode);
   } else {
-    UnresolvedReference* unresolved = new UnresolvedReference(this->currentSection().m_ID, m_PC, offset, addrMode, m_FileName, m_LineNumber);
+    UnresolvedReference* unresolved = new UnresolvedReference(this->currentSection().m_ID, m_PC, offset, addrMode, m_CurrentFileID, m_LineNumber);
     for (int i = 0; i < expressiontokens.size(); ++i) {
       unresolved->m_ExpressionTokens.push_back(expressiontokens.at(i));
     }
@@ -786,7 +787,7 @@ void Assembler::addUnresolved(TokenList& expressiontokens, int64_t m_PC, int64_t
 
 void Assembler::addUnresolvedLabel(const char* name, int64_t pc, TokenList& expressiontokens) {
   assert(findLabel(name) == NULL);
-  UnresolvedReference* unresolved = new UnresolvedReference(this->currentSection().m_ID, pc, pc, AddrMode::IMPL, m_FileName, m_LineNumber);
+  UnresolvedReference* unresolved = new UnresolvedReference(this->currentSection().m_ID, pc, pc, AddrMode::IMPL, m_CurrentFileID, m_LineNumber);
   for (int i = 0; i < expressiontokens.size(); ++i) {
     unresolved->m_ExpressionTokens.push_back(expressiontokens.at(i));
   }
@@ -794,6 +795,14 @@ void Assembler::addUnresolvedLabel(const char* name, int64_t pc, TokenList& expr
   m_Unresolved.push_back(unresolved);
 }
 
+
+void Assembler::writeInstruction(int opcode, InputFileID file_id, TextSpan const& span)
+{
+  if (m_CreateDebugInfo) {
+    int debug = 0;
+  }
+  writeByte(opcode & 0xff);
+}
 
 void Assembler::writeByte(byte value)
 {
@@ -821,11 +830,11 @@ void Assembler::writeWordAt(word value, int64_t position) {
   writeByteAt(value >> 8, position + 1);
 }
 
-byte Assembler::calculateBranch(int64_t source, int64_t target, const char* filename, int linenumber) {
+byte Assembler::calculateBranch(int64_t source, int64_t target, InputFileID file_id, TextSpan const& span) {
   int64_t offset = target - 2 - source;
   if (offset > 127 || offset < -128)
   {
-    recordError(Hue::Util::String::static_printf("Branch out of range (%d)", offset).c_str(), filename, linenumber, true);
+    recordError(Hue::Util::String::static_printf("Branch out of range (%d)", offset).c_str(), file_id, span, true);
   }
   if (offset >= 0)
   {
@@ -837,10 +846,10 @@ byte Assembler::calculateBranch(int64_t source, int64_t target, const char* file
   }
 } 
 
-void Assembler::writeInstructionOperand(int64_t pc, int64_t offset, int64_t operand, AddrMode addrMode, const char* filename, int linenumber) {
+void Assembler::writeInstructionOperand(int64_t pc, int64_t offset, int64_t operand, AddrMode addrMode, InputFileID file_id, TextSpan const& span) {
   if (addrMode == AddrMode::REL)
   {
-    byte branchvalue = calculateBranch(pc, operand, filename, linenumber);
+    byte branchvalue = calculateBranch(pc, operand, file_id, span);
     writeByteAt(branchvalue, offset);
   }
   else
@@ -850,7 +859,7 @@ void Assembler::writeInstructionOperand(int64_t pc, int64_t offset, int64_t oper
     {
       if (operand > 255)
       {
-        recordError(Hue::Util::String::static_printf("Value out of range: %d", operand), filename, linenumber, true);
+        recordError(Hue::Util::String::static_printf("Value out of range: %d", operand), file_id, span, true);
       }
       writeByteAt((byte)operand, offset);
     }
@@ -858,7 +867,7 @@ void Assembler::writeInstructionOperand(int64_t pc, int64_t offset, int64_t oper
     {
       if (operand > 65535)
       {
-        recordError(Hue::Util::String::static_printf("Value out of range: %d", operand), filename, linenumber, true);
+        recordError(Hue::Util::String::static_printf("Value out of range: %d", operand), file_id, span, true);
       }
       writeByteAt(operand & 0xff, offset);
       writeByteAt((operand >> 8) & 0xff, offset + 1);
@@ -914,7 +923,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
             }
             else if (val > maxVal)
             {
-              recordError(Hue::Util::String::static_printf("Value out of range: %s", expr.at(0).toString().c_str()), m_FileName, m_LineNumber, true);
+              recordError(Hue::Util::String::static_printf("Value out of range: %s", expr.at(0).toString().c_str()), m_CurrentFileID, m_LineNumber, true);
             }
             if (isByte) {
               writeByte((byte)val);
@@ -938,7 +947,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
           }
           else if (val > maxVal)
           {
-            recordError(Hue::Util::String::static_printf("Value out of range: %s", expr.at(0).toString().c_str()), m_FileName, m_LineNumber, true);
+            recordError(Hue::Util::String::static_printf("Value out of range: %s", expr.at(0).toString().c_str()), m_CurrentFileID, m_LineNumber, true);
           }
           if (isByte) {
             writeByte((byte)val);
@@ -970,7 +979,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
         return;
       }
       else if (tokens.at(0).equals(".assert")) {
-        m_Assertions.push_back(new Assertion(this->currentSection().m_ID, m_PC, tokens.rest(1), m_FileName, m_LineNumber));
+        m_Assertions.push_back(new Assertion(this->currentSection().m_ID, m_PC, tokens.rest(1), m_CurrentFileID, m_LineNumber));
         return;
       }
       else if (tokens.at(0).equals(".org")) {
@@ -996,7 +1005,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
       else if (parseConditionals(tokens)) {
         return;
       } else {
-        recordError(Hue::Util::String::static_printf("Unsupported directive '%s'", tokens.at(0).toString().c_str()), m_FileName, m_LineNumber, true);
+        recordError(Hue::Util::String::static_printf("Unsupported directive '%s'", tokens.at(0).toString().c_str()), m_CurrentFileID, m_LineNumber, true);
       }
     }
     if (tokens.at(0).equals('*')) {
@@ -1012,7 +1021,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
             }
           }
           if (val < m_PC) {
-            recordError("Cannot rewind program counter",  m_FileName, m_LineNumber, true);
+            recordError("Cannot rewind program counter",  m_CurrentFileID, m_LineNumber, true);
             return;
           }
           while (val > m_PC) {
@@ -1138,10 +1147,10 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
         auto def = OpcodeDefs::getOpcodeDefForAddressingMode(opcodedefs, addrMode);
         if (def == NULL)
         {
-          recordError("Invalid addressing mode", m_FileName, m_LineNumber, true);
+          recordError("Invalid addressing mode", m_CurrentFileID, m_LineNumber, true);
           return;
         }
-        writeByte(def->m_Opcode);
+		writeInstruction(def->m_Opcode, m_CurrentFileID, m_LineNumber);
         if (addrMode != AddrMode::IMPL)
         {
           int64_t operandValue = evaluateExpression(operands, m_PC - 1, false);
@@ -1156,7 +1165,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
           }
           else
           {
-            writeInstructionOperand(m_PC - 1, writeOffset(), operandValue, addrMode, m_FileName, m_LineNumber);
+            writeInstructionOperand(m_PC - 1, writeOffset(), operandValue, addrMode, m_CurrentFileID, m_LineNumber);
           }
         }
       }
@@ -1168,7 +1177,7 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
       }
       else
       {
-        recordError(Hue::Util::String::static_printf("Syntax Error: Unknown opcode '%s'", tokens.at(0).toString().c_str()), m_FileName, m_LineNumber, true);
+        recordError(Hue::Util::String::static_printf("Syntax Error: Unknown opcode '%s'", tokens.at(0).toString().c_str()), m_CurrentFileID, m_LineNumber, true);
       }
       return;
     }
@@ -1182,7 +1191,7 @@ void Assembler::fprintErrors(FILE* file, int max_errors) {
   sasm_fprintf(file, "%d errors.\n", (int)m_Errors.size());
 }
 
-void Assembler::addFileInfo(const char* filename, const char* contents) {
+InputFileID Assembler::addFileInfo(const char* filename, const char* contents) {
   InputFileInfo info;
   info.m_Filename = filename;
 #if SASM_ENABLE_DEBUGINFO
@@ -1190,10 +1199,11 @@ void Assembler::addFileInfo(const char* filename, const char* contents) {
   info.m_End      = contents + strlen(contents);
 #endif
   m_InputFiles.push_back(info);
+  return (InputFileID)m_InputFiles.size();
 }
 
 bool                                              
-Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column, Token const& token) {
+Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column_begin, int& column_end, Token const& token) {
 #if SASM_ENABLE_DEBUGINFO
   for (int i = 0; i < (int)m_InputFiles.size(); ++i) {
     InputFileInfo& inp = m_InputFiles[i];
@@ -1213,9 +1223,10 @@ Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column, To
       }
       auto it = std::lower_bound(inp.m_Lines.begin(), inp.m_Lines.end(), token.m_pzTokenStart);
       assert(it != inp.m_Lines.end());
-      inputfileID = i;
-      linenumber  = (int)(it - inp.m_Lines.begin()) + 1;
-      column      = (int)(token.m_pzTokenStart - *it);
+      inputfileID   = i;
+      linenumber    = (int)(it - inp.m_Lines.begin()) + 1;
+      column_begin  = (int)(token.m_pzTokenStart - *it);
+      column_end = (int)(column_begin + token.m_pzTokenEnd - token.m_pzTokenStart);
       return true;
     }
   }
@@ -1229,6 +1240,7 @@ Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column, To
 
 Assembler::InputFileInfo&                                    
 Assembler::getInputFileInfo(int inputFileID) {
+  --inputFileID;
   assert(inputFileID < (int)m_InputFiles.size());
   if (inputFileID < (int)m_InputFiles.size()) {
     return m_InputFiles[inputFileID];
@@ -1245,4 +1257,7 @@ Assembler::getInputFileInfo(int inputFileID) {
   }
 }
 
+const char* Assembler::getInputFileName(InputFileID file_id) {
+  return getInputFileInfo(file_id).m_Filename.c_str();
+}
 }
