@@ -1,3 +1,4 @@
 **/.vs/
 /bin/*
 /build/*
+/test/steintronic_sid_dump.txt
