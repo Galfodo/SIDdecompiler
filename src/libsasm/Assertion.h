@@ -10,10 +10,10 @@ public:
   int64_t     m_PC;
   int         m_SectionID;
   TokenList   m_ExpressionTokens;
-  const char* m_FileName;
-  int         m_Line;
+  InputFileID m_FileID;
+  TextSpan    m_Span;
 
-              Assertion(int sectionID, int64_t pc, TokenList const& expressionTokens, const char* filename, int line);
+              Assertion(int sectionID, int64_t pc, TokenList const& expressionTokens, InputFileID file_id, TextSpan const& span);
 };
 
 }

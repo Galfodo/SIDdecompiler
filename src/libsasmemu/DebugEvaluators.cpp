@@ -201,15 +201,12 @@ parseTokenList(TokenList const& tokens) {
   return NULL;
 }
 
-AssertEvaluator::AssertEvaluator(DBExpression* expr, Hue::Util::String const& text, Hue::Util::String const& filename, int line) : 
+AssertEvaluator::AssertEvaluator(DBExpression* expr, Hue::Util::String const& text, InputFileID file_id, TextSpan const& span) :
   m_Expression(expr), 
   m_Text(text), 
-  m_FileName(filename), 
-  m_Line(line) {
+  m_FileID(file_id), 
+  m_Span(span) {
   assert(expr);
-  if (m_FileName.empty()) {
-    m_FileName = "<stdin>";
-  }
 }
 
 AssertEvaluator::~AssertEvaluator() {
@@ -220,7 +217,7 @@ int AssertEvaluator::eval(C64MachineState& state, int addr) {
   if (m_Expression->eval(state)) {
     return TraceEvaluator::CONTINUE;
   } else {
-    state.m_Debugger.m_ErrorString = Hue::Util::String::static_printf("ASSERTION FAILURE at memory location $%04x.\n  Source file '%s', line %d.\n  Expression: '%s'", (int)addr, m_FileName.c_str(), m_Line, m_Text.c_str());
+    state.m_Debugger.m_ErrorString = Hue::Util::String::static_printf("ASSERTION FAILURE at memory location $%04x.\n  Source file ID '%d', line %d.\n  Expression: '%s'", (int)addr, m_FileID, m_Span.m_Line, m_Text.c_str()); // Fixme! C64MachineState must contain the debug information
     return TraceEvaluator::STOP;
   }
 }
@@ -229,7 +226,7 @@ AssertEvaluator* AssertEvaluator::parseAssertion(Assertion* assertion) {
   assert(assertion);
   DBExpression* expr = parseTokenList(assertion->m_ExpressionTokens);
   if (expr) {
-    return new AssertEvaluator(expr, assertion->m_ExpressionTokens.toString(), assertion->m_FileName, assertion->m_Line);
+    return new AssertEvaluator(expr, assertion->m_ExpressionTokens.toString(), assertion->m_FileID, assertion->m_Span);
   }
   return NULL;
 }
