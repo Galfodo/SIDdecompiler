@@ -135,18 +135,18 @@ void C64MachineState::restoreSnapshot(Snapshot* snapshot) {
   memcpy(this->m_Mem, snapshot->m_Mem, sizeof(this->m_Mem));
 }
 
-void C64MachineState::putBytes(int addr, byte* data, int count) {
+void C64MachineState::load(int addr, byte const* data, int count, bool init_cpu) {
   assert(count + addr < 65536);
   memcpy(m_Mem + addr, data, count);
-}
-
-void C64MachineState::putPRG(byte* data, int count, bool init_cpu) {
-  assert(count >= 2);
-  int addr = data[0] | ((int)data[1] << 8);
-  putBytes(addr, data + 2, count - 2);
   if (init_cpu) {
     initCPU(addr);
   }
+}
+
+void C64MachineState::loadPRG(byte const* data, int count, bool init_cpu) {
+  assert(count >= 2);
+  int addr = data[0] | ((int)data[1] << 8);
+  load(addr, data + 2, count - 2, init_cpu);
 }
 
 bool C64MachineState::parseAssemblerAssertions(Assembler& assembler) {

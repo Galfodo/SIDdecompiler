@@ -89,8 +89,8 @@ public:
   void                    clearNMI();
   void                    setNMI();
   virtual int             runCPU(void) = 0;
-  void                    putBytes(int offset, byte* data, int count);
-  void                    putPRG(byte* data, int count, bool init_cpu);
+  void                    load(int offset, byte const* data, int count, bool init_cpu);
+  void                    loadPRG(byte const* data, int count, bool init_cpu);
   bool                    parseAssemblerAssertions(Assembler& assembler);
   inline DebuggerState&   debugger() { return m_Debugger; }
   inline int              getWord(int offset) { return m_Mem[offset] | (m_Mem[offset + 1] << 8); }

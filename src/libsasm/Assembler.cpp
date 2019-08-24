@@ -47,6 +47,7 @@ void Assembler::init() {
   m_ORG = 0;
   m_AssemblyTime = 0;
   m_CreateDebugInfo = false;
+  m_Quiet = false;
 }
 
 std::vector<byte> Assembler::assemble_string(const char* str) {
@@ -70,8 +71,10 @@ const char* Assembler::version() {
 }
 
 std::vector<byte> Assembler::assemble(const char* source, const char* filename) {
-  sasm_printf("%s\n", version());
-  sasm_printf("Assembling file '%s'\n", filename);
+  if (!m_Quiet) {
+    sasm_printf("%s\n", version());
+    sasm_printf("Assembling file '%s'\n", filename);
+  }
   auto starttime = std::chrono::high_resolution_clock::now();
   m_AssemblyTime = 0;
   m_Source.assign(source);
@@ -80,7 +83,7 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
 
   m_LineNumber = 0;
 
-  m_CurrentFileID = addFileInfo(source, filename);
+  m_CurrentFileID = addFileInfo(filename, source);
 
   Token
     token;
@@ -97,8 +100,6 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
 
   TokenList
     currentTokens;
-
-
 
   while (stream.next(token)) {
     currentTokens.clear();
@@ -121,8 +122,10 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
   resolveAll();
   auto endtime = std::chrono::high_resolution_clock::now();
   auto deltatime = std::chrono::duration<double, std::milli>(endtime - starttime);
-  sasm_printf("%s linecount: %d\n", getInputFileName(m_CurrentFileID), m_LineNumber);
-  //sasm_printf("%d error(s) in %.03f milliseconds\n", (int)m_Errors.size(), deltatime);
+  if (!m_Quiet) {
+    sasm_printf("%s linecount: %d\n", getInputFileName(m_CurrentFileID), m_LineNumber);
+    //sasm_printf("%d error(s) in %.03f milliseconds\n", (int)m_Errors.size(), deltatime);
+  }
   if (m_Errors.size() == 0) {
     result = currentSection().m_Data;
   }
@@ -189,7 +192,7 @@ int Assembler::errorcount() {
   return (int)m_Errors.size();
 }
 
-bool Assembler::write(const char* filename, std::vector<byte> const& data) {
+bool Assembler::writeToFile(const char* filename, std::vector<byte> const& data) {
   size_t size = data.size();
   byte* bytes = NULL;
   if (size) {

@@ -43,7 +43,7 @@ public:
   std::vector<byte>                                 assemble(const char* source, const char* filename);
   int                                               errorcount();
   void                                              fprintErrors(FILE* file, int max_errors = INT_MAX);
-  bool                                              write(const char* filename, std::vector<byte> const& data);
+  bool                                              writeToFile(const char* filename, std::vector<byte> const& data);
   inline std::vector<Assertion*> const&             assertions() const { return m_Assertions; }
 //private:
   void                                              addLabel(const char* name, int64_t pc);
@@ -105,6 +105,7 @@ public:
   Hue::Util::String                                 m_Source;
   time_t                                            m_AssemblyTime;
   bool                                              m_CreateDebugInfo;
+  bool                                              m_Quiet;
 };
 
 }

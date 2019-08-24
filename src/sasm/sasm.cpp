@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
 #endif
   assembler.fprintErrors(stderr, max_errors);
   if (assembler.errorcount() == 0) {
-    assembler.write(sOutname.c_str(), data);
+    assembler.writeToFile(sOutname.c_str(), data);
   } 
   return 0;
 }
