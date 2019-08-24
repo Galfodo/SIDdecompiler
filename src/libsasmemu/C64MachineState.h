@@ -84,6 +84,10 @@ public:
   void                    clearMem();
   void                    softReset();
   void                    initCPU(int addr, byte A = 0, byte X = 0, byte Y = 0);
+  void                    clearIRQ();
+  void                    setIRQ();
+  void                    clearNMI();
+  void                    setNMI();
   virtual int             runCPU(void) = 0;
   void                    putBytes(int offset, byte* data, int count);
   void                    putPRG(byte* data, int count, bool init_cpu);
@@ -177,6 +181,9 @@ public:
     byte                SP; 
     byte                SR; 
     int                 PC; 
+    bool                IRQ;
+    bool                NMI;
+    bool                _NMI;
   };
 
   struct Snapshot {
@@ -195,11 +202,14 @@ public:
   byte                  SP; 
   byte                  SR; 
   int                   PC; 
+  bool                  IRQ;
+  bool                  NMI;
+  bool                  _NMI;
+
   byte                  m_Mem[65536];
   mutable DebuggerState m_Debugger;
 protected:
   int                   CurrentInstructionPC;
-  unsigned              temp; // Used by inlined helpers. Remove??
 };
 
 template<typename EMUTRAITS>
@@ -290,7 +300,7 @@ public:
 
   inline void BRANCH() {
     ADDCYCLES(1);
-    temp = FETCH();                                         
+    unsigned temp = FETCH();                                         
     if (temp < 0x80)                                        
     {                                                       
       ADDCYCLES(EVALPAGECROSSING(PC, PC + temp));
@@ -304,7 +314,8 @@ public:
   }
 
   inline void ADC(byte const& data) {
-    unsigned tempval = data;                                             
+    unsigned tempval = data;          
+    unsigned temp;
     if (SR & FD)                                                      
     {                                                                    
       temp = (A & 0xf) + (tempval & 0xf) + (SR & FC);               
@@ -350,7 +361,7 @@ public:
 
   inline void SBC(byte const& data) {
     unsigned tempval = data;                                             
-    temp = A - tempval - ((SR & FC) ^ FC);                            
+    unsigned temp = A - tempval - ((SR & FC) ^ FC);                            
     if (SR & FD)                                                      
     {                                                                    
       unsigned tempval2;                                               
@@ -388,7 +399,7 @@ public:
   }
 
   inline void CMP(byte const& src, byte const& data) {
-    temp = (src - data) & 0xff;           
+    unsigned temp = (src - data) & 0xff;           
     SR = (SR & ~(FC|FN|FZ)) | (temp & FN);                  
     if (!temp) 
       SR |= FZ;               
@@ -397,7 +408,7 @@ public:
   }
 
   inline void ASL(byte& data) {                                       
-    temp = data;                          
+    unsigned temp = data;                          
     temp <<= 1;                           
     if (temp & 0x100) 
       SR |= FC;        
@@ -407,7 +418,7 @@ public:
   }
 
   inline void LSR(byte& data) {                                       
-    temp = data;                          
+    unsigned temp = data;                          
     if (temp & 1) 
       SR |= FC;            
     else 
@@ -417,7 +428,7 @@ public:
   }
 
   inline void ROL(byte& data) {                                       
-    temp = data;                          
+    unsigned temp = data;                          
     temp <<= 1;                           
     if (SR & FC) 
       temp |= 1;            
@@ -429,7 +440,7 @@ public:
   }
 
   inline void ROR(byte& data) {                                       
-    temp = data;                          
+    unsigned temp = data;                          
     if (SR & FC) 
       temp |= 0x100;        
     if (temp & 1) 
@@ -441,12 +452,12 @@ public:
   }
 
   inline void DEC(byte& data) {                                       
-    temp = data - 1;                      
+    unsigned temp = data - 1;                      
     ASSIGNSETFLAGS(data, temp);           
   }
 
   inline void INC(byte& data) {                                       
-    temp = data + 1;                      
+    unsigned temp = data + 1;                      
     ASSIGNSETFLAGS(data, temp);           
   }
 
@@ -495,11 +506,27 @@ public:
       2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7
     };
 
-    temp = 0;
+    unsigned temp = 0;
 
     CHECKBREAKPOINTS();
     if (m_Debugger.trapOccurred()) {
       return 0;
+    }
+
+    if (this->IRQ && !(this->SR & CPUFlags::FI) || // Trigger IRQ only if interrupt disable flag is not set
+        this->NMI && !this->_NMI)                  // Trigger NMI only on edge
+    {
+      PUSH((PC) >> 8);
+      PUSH((PC) & 0xff);
+      PUSH(SR);
+      if (this->NMI) {
+        PC = getWord(0xfffa);
+      } else {
+        PC = getWord(0xfffe);
+      }
+      SR |= FI;
+      SR &= ~SR;
+      ADDCYCLES(7);
     }
 
 #if DEBUG_EMULATOR

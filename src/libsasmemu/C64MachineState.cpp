@@ -65,6 +65,23 @@ void C64MachineState::softReset() {
   initCPU(boot, 0, 0, 0);
 }
 
+void C64MachineState::clearIRQ() {
+  IRQ = false;
+}
+
+void C64MachineState::setIRQ() {
+  IRQ = true;
+}
+
+void C64MachineState::clearNMI() {
+  NMI = false;
+  _NMI = false;
+}
+
+void C64MachineState::setNMI() {
+  NMI = true;
+}
+
 void C64MachineState::initCPU(int addr, byte a, byte x, byte y) {
   A                       = a;
   X                       = x;
@@ -74,27 +91,35 @@ void C64MachineState::initCPU(int addr, byte a, byte x, byte y) {
   PC                      = addr;
   CurrentInstructionPC    = addr;
   m_Debugger.m_CPUCycles  = 0;
+  clearIRQ();
+  clearNMI();
 }
 
 C64MachineState::CPUState C64MachineState::getCPUState() const {
   CPUState cpustate;
-  cpustate.A  = this->A                   ;
-  cpustate.X  = this->X                   ;
-  cpustate.Y  = this->Y                   ;
-  cpustate.SP = this->SP                  ;
-  cpustate.SR = this->SR                  ;
-  cpustate.PC = this->CurrentInstructionPC;
+  cpustate.A    = this->A                   ;
+  cpustate.X    = this->X                   ;
+  cpustate.Y    = this->Y                   ;
+  cpustate.SP   = this->SP                  ;
+  cpustate.SR   = this->SR                  ;
+  cpustate.PC   = this->CurrentInstructionPC;
+  cpustate.IRQ  = this->IRQ                 ;
+  cpustate.NMI  = this->NMI                 ;
+  cpustate._NMI = this->_NMI                ;
   return cpustate;
 }
 
 void C64MachineState::restoreCPUState(CPUState const& cpustate) {
-  this->A                     = cpustate.A ;
-  this->X                     = cpustate.X ;
-  this->Y                     = cpustate.Y ;
-  this->SP                    = cpustate.SP;
-  this->SR                    = cpustate.SR;
-  this->PC                    = cpustate.PC;
-  this->CurrentInstructionPC  = cpustate.PC;
+  this->A                     = cpustate.A   ;
+  this->X                     = cpustate.X   ;
+  this->Y                     = cpustate.Y   ;
+  this->SP                    = cpustate.SP  ;
+  this->SR                    = cpustate.SR  ;
+  this->PC                    = cpustate.PC  ;
+  this->CurrentInstructionPC  = cpustate.PC  ;
+  this->IRQ                   = cpustate.IRQ ; 
+  this->NMI                   = cpustate.NMI ; 
+  this->_NMI                  = cpustate._NMI;
 }
 
 C64MachineState::Snapshot* C64MachineState::getSnapshot() const {
