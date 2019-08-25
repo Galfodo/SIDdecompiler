@@ -39,6 +39,14 @@ template<> void traceHaltT<true>(DebuggerState& db, int addr) {
   db.traceHalt(addr);
 }
 
+MemoryMappedDevice::MemoryMappedDevice() : m_MachineState(nullptr) {
+}
+
+void MemoryMappedDevice::attach(C64MachineState& machine) {
+  m_MachineState = &machine;
+  machine.m_Devices.push_back(std::unique_ptr<MemoryMappedDevice>(this));
+}
+
 void DebuggerState::init() {
   m_Trapped   = 0;
   m_TrappedPC = 0;

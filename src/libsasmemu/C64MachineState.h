@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <map>
+#include <memory>
 
 #include "Types.h"
 #include "DebuggerState.h"
@@ -77,6 +78,23 @@ public:
 
 };
 
+class C64MachineState;
+
+class MemoryMappedDevice {
+  C64MachineState* m_MachineState;
+protected:
+  inline C64MachineState& machine() {
+    assert(m_MachineState);
+    return *m_MachineState;
+  }
+public:
+                MemoryMappedDevice();
+  virtual       ~MemoryMappedDevice() = 0;
+  virtual void  attach(class C64MachineState& machine);
+  virtual void  reset() = 0;
+  virtual void  update(int delta_cycles) = 0;
+};
+
 class C64MachineState {
 public:
                           C64MachineState();
@@ -96,6 +114,7 @@ public:
   inline int              getWord(int offset) { return m_Mem[offset] | (m_Mem[offset + 1] << 8); }
   inline byte             getByte(int offset) { return m_Mem[offset]; }
   inline void             putByte(int offset, byte value) { m_Mem[offset] = value; }
+  void                    connectDevice(MemoryMappedDevice* device);
 
   // MEMORY ACCESSORS: These do not trap
   inline byte const& _MEM(int address) const {
@@ -208,6 +227,8 @@ public:
 
   byte                  m_Mem[65536];
   mutable DebuggerState m_Debugger;
+  std::vector<std::unique_ptr<MemoryMappedDevice> >
+                        m_Devices;
 protected:
   int                   CurrentInstructionPC;
 };

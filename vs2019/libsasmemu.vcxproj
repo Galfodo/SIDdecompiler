@@ -153,16 +153,20 @@
     <ClInclude Include="..\src\libsasmemu\DebugEvaluators.h" />
     <ClInclude Include="..\src\libsasmemu\DebuggerState.h" />
     <ClInclude Include="..\src\libsasmemu\Monitor.h" />
+    <ClInclude Include="..\src\libsasmemu\CIA.h" />
     <ClInclude Include="..\src\libsasmemu\Profiling.h" />
     <ClInclude Include="..\src\libsasmemu\TraceOperand.h" />
+    <ClInclude Include="..\src\libsasmemu\VIC-II.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\libsasmemu\C64MachineState.cpp" />
     <ClCompile Include="..\src\libsasmemu\DebugEvaluators.cpp" />
     <ClCompile Include="..\src\libsasmemu\DebuggerState.cpp" />
     <ClCompile Include="..\src\libsasmemu\Monitor.cpp" />
+    <ClCompile Include="..\src\libsasmemu\CIA.cpp" />
     <ClCompile Include="..\src\libsasmemu\Profiling.cpp" />
     <ClCompile Include="..\src\libsasmemu\TraceOperand.cpp" />
+    <ClCompile Include="..\src\libsasmemu\VIC-II.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

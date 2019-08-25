@@ -33,6 +33,12 @@
     <ClInclude Include="..\src\libsasmemu\Monitor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\CIA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\VIC-II.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\libsasmemu\DebugEvaluators.cpp">
@@ -51,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\libsasmemu\Monitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\CIA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\VIC-II.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
