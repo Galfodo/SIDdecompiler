@@ -72,6 +72,7 @@ SASM::FullEmu* TestRunner::machineState() {
 
 namespace Tests {
   IMPORT_TEST(simpletest);
+  IMPORT_TEST(irqtest);
 }
 
 }
@@ -92,6 +93,7 @@ int main(int argc, char** argv) {
   printf("SASM Test Runner:\n");
   printf("-----------------\n");
   RUN_TEST(simpletest);
+  RUN_TEST(irqtest);
   printf("-----------------\n");
   printf("Test run complete with %d failed test%s.\n", runner.failedTests(), runner.failedTests() == 1 ? "" : "s");
   return runner.failedTests() ? -1 : 0;

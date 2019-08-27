@@ -24,6 +24,9 @@
     <ClCompile Include="..\src\sasmtestrunner\tests\simpletest.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\sasmtestrunner\tests\irqtest.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\sasmtestrunner\testrunner.h">

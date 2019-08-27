@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\sasmtestrunner\testrunner.cpp" />
     <ClCompile Include="..\src\sasmtestrunner\tests\simpletest.cpp" />
+    <ClCompile Include="..\src\sasmtestrunner\tests\irqtest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\sasmtestrunner\testrunner.h" />
