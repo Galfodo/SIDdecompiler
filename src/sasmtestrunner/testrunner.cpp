@@ -70,14 +70,16 @@ SASM::FullEmu* TestRunner::machineState() {
   return m_MachineState.get();
 }
 
-namespace Tests {
-  IMPORT_TEST(simpletest);
-  IMPORT_TEST(irqtest);
-}
-
 }
 
 #define RUN_TEST(name) runner.runTest(SASM::Tests::name, #name)
+
+namespace SASM { namespace Tests {
+  IMPORT_TEST(simpletest);
+  IMPORT_TEST(brktest);
+  IMPORT_TEST(timerirqtest);
+} }
+
 
 int main(int argc, char** argv) {
   Hue::Util::String path;
@@ -93,7 +95,8 @@ int main(int argc, char** argv) {
   printf("SASM Test Runner:\n");
   printf("-----------------\n");
   RUN_TEST(simpletest);
-  RUN_TEST(irqtest);
+  RUN_TEST(brktest);
+  RUN_TEST(timerirqtest);
   printf("-----------------\n");
   printf("Test run complete with %d failed test%s.\n", runner.failedTests(), runner.failedTests() == 1 ? "" : "s");
   return runner.failedTests() ? -1 : 0;

@@ -3,7 +3,7 @@
 
 namespace SASM { namespace Tests {
 
-bool irqtest(SASM::TestInfo& test) {
+bool brktest(SASM::TestInfo& test) {
   auto src = 
     "  * = $1000     \n"
     "  lda #<irq     \n"
@@ -25,6 +25,38 @@ bool irqtest(SASM::TestInfo& test) {
   SASM_TEST_ASSERT(test, machine->X == 0);
   return true;
 }
+
+bool timerirqtest(SASM::TestInfo& test) {
+  auto src = 
+    "  * = $1000     \n"
+    "  lda #<irq     \n"
+    "  ldy #>irq     \n"
+    "  sta $fffe     \n"
+    "  sty $ffff     \n"
+    "  ldx #0        \n"
+    "  lda #100      \n"
+    "  sta $dc04     \n"
+    "  stx $dc05     \n"
+    "  lda #$81      \n"
+    "  sta $dc0d     \n"
+    "  ldy #$00      \n"
+    "loop:           \n"
+    "  inx           \n"
+    "  bne loop      \n"
+    "  rts           \n"
+    "irq:            \n"
+    "  tya           \n"
+    "  beq noack     \n" // We want the interrupt to occur twice, so we only acknowledge it on the second occurrence
+    "  lda $dc0d     \n"
+    "noack:          \n"
+    "  rti           \n";
+
+  test.testRunner().compileAndRunString(src, "timerirqtest");
+  auto machine = test.testRunner().machineState();
+  SASM_TEST_ASSERT(test, machine->Y == 2);
+  return true;
+}
+
 
 } }
 
