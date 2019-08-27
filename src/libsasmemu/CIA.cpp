@@ -35,6 +35,17 @@ CIA::CIA(CIA::ID id) : m_ID(id) {
   reset();
 }
 
+class CIAWriteEvaluator : public TraceEvaluator {
+  virtual int eval(C64MachineState&, int) {
+    return TraceEvaluator::CONTINUE;
+  }
+};
+
+void CIA::onAttach(C64MachineState& machine) {
+  MemoryMappedDevice::onAttach(machine);
+  machine.debugger().registerTraceWriteEvaluator(new CIAWriteEvaluator, 0xdc00, 256, true);
+}
+
 void CIA::reset() {
   m_AssertInterrupt = false;
   m_TimerA.reset();

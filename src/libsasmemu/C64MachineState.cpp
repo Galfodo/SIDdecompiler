@@ -42,9 +42,11 @@ template<> void traceHaltT<true>(DebuggerState& db, int addr) {
 MemoryMappedDevice::MemoryMappedDevice() : m_MachineState(nullptr) {
 }
 
-void MemoryMappedDevice::attach(C64MachineState& machine) {
+MemoryMappedDevice::~MemoryMappedDevice() {
+}
+
+void MemoryMappedDevice::onAttach(C64MachineState& machine) {
   m_MachineState = &machine;
-  machine.m_Devices.push_back(std::unique_ptr<MemoryMappedDevice>(this));
 }
 
 void DebuggerState::init() {
@@ -60,6 +62,11 @@ C64MachineState::C64MachineState() {
 }
 
 C64MachineState::~C64MachineState() {
+}
+
+void C64MachineState::attach(MemoryMappedDevice* device) {
+  m_Devices.push_back(std::unique_ptr<MemoryMappedDevice>(device));
+  device->onAttach(*this);
 }
 
 void C64MachineState::clearMem() {

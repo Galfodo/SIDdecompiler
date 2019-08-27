@@ -88,7 +88,7 @@ public:
   bool        m_AssertInterrupt;
 
   CIA(ID id);
-  ~CIA();
+  virtual void onAttach(C64MachineState& machine) override;
   virtual void reset() override;
   virtual void update(int delta_cycles) override;
 };

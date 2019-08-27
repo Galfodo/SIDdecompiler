@@ -90,7 +90,7 @@ protected:
 public:
                 MemoryMappedDevice();
   virtual       ~MemoryMappedDevice() = 0;
-  virtual void  attach(class C64MachineState& machine);
+  virtual void  onAttach(class C64MachineState& machine);
   virtual void  reset() = 0;
   virtual void  update(int delta_cycles) = 0;
 };
@@ -99,6 +99,7 @@ class C64MachineState {
 public:
                           C64MachineState();
   virtual                 ~C64MachineState();
+  void                    attach(MemoryMappedDevice* device);
   void                    clearMem();
   void                    softReset();
   void                    initCPU(int addr, byte A = 0, byte X = 0, byte Y = 0);
