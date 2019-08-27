@@ -199,7 +199,8 @@ public:
     byte                Y; 
     byte                SP; 
     byte                SR; 
-    int                 PC; 
+    int                 PC;
+    bool                BRK;
     bool                IRQ;
     bool                NMI;
     bool                _NMI;
@@ -220,7 +221,8 @@ public:
   byte                  Y; 
   byte                  SP; 
   byte                  SR; 
-  int                   PC; 
+  int                   PC;
+  bool                  BRK;
   bool                  IRQ;
   bool                  NMI;
   bool                  _NMI;
@@ -509,7 +511,7 @@ public:
   {
     static const int cpucycles_table[] = 
     {
-      7,  6,  0,  8,  3,  3,  5,  5,  3,  2,  2,  2,  4,  4,  6,  6, 
+      0,  6,  0,  8,  3,  3,  5,  5,  3,  2,  2,  2,  4,  4,  6,  6, 
       2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
       6,  6,  0,  8,  3,  3,  5,  5,  4,  2,  2,  2,  4,  4,  6,  6, 
       2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
@@ -535,18 +537,21 @@ public:
     }
 
     if (this->IRQ && !(this->SR & CPUFlags::FI) || // Trigger IRQ only if interrupt disable flag is not set
-        this->NMI && !this->_NMI)                  // Trigger NMI only on edge
+        this->NMI && !this->_NMI ||                // Trigger NMI only on edge
+        this->BRK                                  // BRK instruction occurred
+      )
     {
       PUSH((PC) >> 8);
       PUSH((PC) & 0xff);
-      PUSH(SR);
+      PUSH(this->BRK ? (SR | CPUFlags::FB) : (SR &~ CPUFlags::FB));
+      BRK = false;
       if (this->NMI) {
         PC = getWord(0xfffa);
       } else {
         PC = getWord(0xfffe);
       }
-      SR |= FI;
-      SR &= ~SR;
+      SR |= CPUFlags::FI;
+      SR &= ~CPUFlags::FD;
       ADDCYCLES(7);
     }
 
@@ -1186,7 +1191,7 @@ public:
       break;
 
       case 0x28:
-      SR = POP();
+      SR = POP() & ~CPUFlags::FB;
       break;
 
       case 0x2a:
@@ -1242,7 +1247,7 @@ public:
         --PC;
         return 0; // FIXME this should use Trap mechanism
       }
-      SR = POP();
+      SR = POP() & ~CPUFlags::FB;
       PC = POP();
       PC |= (int)POP() << 8;
       break;
@@ -1402,7 +1407,9 @@ public:
       break;
 
       case 0x00:
-      return 0;
+      BRK = true;
+      ++PC;
+      break;
 
       case 0x02:
       HALT(PC-1);

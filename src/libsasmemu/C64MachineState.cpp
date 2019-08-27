@@ -99,6 +99,7 @@ void C64MachineState::initCPU(int addr, byte a, byte x, byte y) {
   PC                      = addr;
   CurrentInstructionPC    = addr;
   m_Debugger.m_CPUCycles  = 0;
+  BRK                     = false;
   clearIRQ();
   clearNMI();
 }
@@ -111,6 +112,7 @@ C64MachineState::CPUState C64MachineState::getCPUState() const {
   cpustate.SP   = this->SP                  ;
   cpustate.SR   = this->SR                  ;
   cpustate.PC   = this->CurrentInstructionPC;
+  cpustate.BRK  = this->BRK                 ;
   cpustate.IRQ  = this->IRQ                 ;
   cpustate.NMI  = this->NMI                 ;
   cpustate._NMI = this->_NMI                ;
@@ -125,6 +127,7 @@ void C64MachineState::restoreCPUState(CPUState const& cpustate) {
   this->SR                    = cpustate.SR  ;
   this->PC                    = cpustate.PC  ;
   this->CurrentInstructionPC  = cpustate.PC  ;
+  this->BRK                   = cpustate.BRK ;
   this->IRQ                   = cpustate.IRQ ; 
   this->NMI                   = cpustate.NMI ; 
   this->_NMI                  = cpustate._NMI;
