@@ -41,7 +41,7 @@ template<> void traceWriteT<true>(DebuggerState& db, int pc, int addr);
 template<> void traceExecuteT<true>(DebuggerState& db, int addr);
 template<> void traceHaltT<true>(DebuggerState& db, int addr);
 
-template<bool COUNT_CYCLES=0, int TRAPS = 0>
+template<bool ENABLE_PLA=false, bool COUNT_CYCLES=false, int TRAPS = 0>
 struct EmuTraits {
 public:
   static void incrementCPUCycles(DebuggerState& db, int count) {
@@ -118,6 +118,18 @@ public:
   void                    connectDevice(MemoryMappedDevice* device);
 
   // MEMORY ACCESSORS: These do not trap
+  struct ReadWrite {
+    byte&       m_Out;
+    byte const& m_In;
+
+    ReadWrite(byte& in_out) : m_Out(in_out), m_In(in_out) {
+    }
+
+    // read-modify-write ctor: output address may be different from input
+    ReadWrite(byte& out, byte const& in) : m_Out(out), m_In(in) {
+    }
+  };
+
   inline byte const& _MEM(int address) const {
     return m_Mem[address];
   }
@@ -285,10 +297,10 @@ public:
     return _MEM(addr);
   }
 
-  inline byte& RMWMEM(int addr) {
+  inline ReadWrite RMWMEM(int addr) {
     READ(addr);
     WRITE(addr);
-    return _MEM(addr);
+    return ReadWrite(WMEM(addr), RMEM(addr));
   }
 
   inline void PUSH(byte const& data) {
@@ -431,28 +443,28 @@ public:
       SR |= FC;         
   }
 
-  inline void ASL(byte& data) {                                       
-    unsigned temp = data;                          
+  inline void ASL(ReadWrite rw) {                                       
+    unsigned temp = rw.m_In;                          
     temp <<= 1;                           
     if (temp & 0x100) 
       SR |= FC;        
     else 
       SR &= ~FC;                    
-    ASSIGNSETFLAGS(data, temp);           
+    ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void LSR(byte& data) {                                       
-    unsigned temp = data;                          
+  inline void LSR(ReadWrite rw) {                                       
+    unsigned temp = rw.m_In;                          
     if (temp & 1) 
       SR |= FC;            
     else 
       SR &= ~FC;                    
     temp >>= 1;                           
-    ASSIGNSETFLAGS(data, temp);           
+    ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void ROL(byte& data) {                                       
-    unsigned temp = data;                          
+  inline void ROL(ReadWrite rw) {                                       
+    unsigned temp = rw.m_In;                          
     temp <<= 1;                           
     if (SR & FC) 
       temp |= 1;            
@@ -460,11 +472,11 @@ public:
       SR |= FC;        
     else 
       SR &= ~FC;                    
-    ASSIGNSETFLAGS(data, temp);           
+    ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void ROR(byte& data) {                                       
-    unsigned temp = data;                          
+  inline void ROR(ReadWrite rw) {                                       
+    unsigned temp = rw.m_In;                          
     if (SR & FC) 
       temp |= 0x100;        
     if (temp & 1) 
@@ -472,17 +484,19 @@ public:
     else 
       SR &= ~FC;                    
     temp >>= 1;                           
-    ASSIGNSETFLAGS(data, temp);           
+    ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void DEC(byte& data) {                                       
-    unsigned temp = data - 1;                      
-    ASSIGNSETFLAGS(data, temp);           
+  inline void DEC(ReadWrite rw) {                                       
+    unsigned temp = rw.m_In;
+    --temp;
+    ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void INC(byte& data) {                                       
-    unsigned temp = data + 1;                      
-    ASSIGNSETFLAGS(data, temp);           
+  inline void INC(ReadWrite rw) {                                       
+    unsigned temp = rw.m_In;
+    ++temp;
+    ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
   inline void EOR(byte const& data) {                                       
@@ -1428,9 +1442,9 @@ public:
   }
 };
 
-typedef C64MachineStateT<EmuTraits<false, DebuggerState::TRAP_NONE> > MinimalEmu;
-typedef C64MachineStateT<EmuTraits<true, DebuggerState::TRAP_NONE> > MinimalCycleCountingEmu;
-typedef C64MachineStateT<EmuTraits<true, DebuggerState::TRAP_ALL> > FullEmu;
+typedef C64MachineStateT<EmuTraits<false, false, DebuggerState::TRAP_NONE> > MinimalEmu; // No C64-PLA, No cycle counting, no traps
+typedef C64MachineStateT<EmuTraits<false, true, DebuggerState::TRAP_NONE> > MinimalCycleCountingEmu; // No C64-PLA, cycle counting, no traps
+typedef C64MachineStateT<EmuTraits<true, true, DebuggerState::TRAP_ALL> > FullEmu; // C64-PLA, cycle counting, all trap types
 
 }
 
