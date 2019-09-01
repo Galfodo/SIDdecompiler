@@ -41,7 +41,17 @@ template<> void traceWriteT<true>(DebuggerState& db, int pc, int addr);
 template<> void traceExecuteT<true>(DebuggerState& db, int addr);
 template<> void traceHaltT<true>(DebuggerState& db, int addr);
 
-template<bool ENABLE_PLA=false, bool COUNT_CYCLES=false, int TRAPS = 0>
+// This class holds page pointers for a specific memory configuration
+class MemConfig {
+public:
+  byte  m_PageMask[256];      // Normally 0xff, but for memory mapped devices it could be 0x0f, 0x1f, 0x3f etc
+  byte* m_PageTable[256];     // Pointer to memory pages for the entire memory range
+  MemConfig();
+  void init(byte* ram_base);
+  void setPageConfig(int page_index, byte* page, byte pagemask = 0xff);
+};
+
+template<bool COUNT_CYCLES=false, int TRAPS = 0>
 struct EmuTraits {
 public:
   static void incrementCPUCycles(DebuggerState& db, int count) {
@@ -95,7 +105,78 @@ public:
   virtual void  update(int delta_cycles) = 0;
 };
 
+struct ReadWrite {
+  byte&       m_Out;
+  byte const& m_In;
+
+  ReadWrite(byte& in_out) : m_Out(in_out), m_In(in_out) {
+  }
+
+  // read-modify-write ctor: output address may be different from input
+  ReadWrite(byte& out, byte const& in) : m_Out(out), m_In(in) {
+  }
+};
+
 class C64MachineState {
+public:
+  enum CPUFlags {
+    FN = 0x80,
+    FV = 0x40,
+    FU = 0x20, // Unused
+    FB = 0x10,
+    FD = 0x08,
+    FI = 0x04,
+    FZ = 0x02,
+    FC = 0x01
+  };
+
+  struct CPUState {
+    byte                  A;
+    byte                  X;
+    byte                  Y; 
+    byte                  SP; 
+    byte                  SR; 
+    int                   PC;
+    bool                  BRK;
+    bool                  IRQ;
+    bool                  NMI;
+    bool                  _NMI;
+  };
+
+  struct Snapshot {
+    CPUState              m_CPUState;
+    byte                  m_Mem[65536];
+  };
+
+  byte                    A;
+  byte                    X;
+  byte                    Y; 
+  byte                    SP; 
+  byte                    SR; 
+  int                     PC;
+  bool                    BRK;
+  bool                    IRQ;
+  bool                    NMI;
+  bool                    _NMI;
+
+  byte                    m_Mem[65536];
+
+  enum {
+    MEM_CONFIGURATIONS = 8,
+    MEM_DEFAULT_CONFIGURATION = 7
+  };
+
+  MemConfig               m_ReadConfig[MEM_CONFIGURATIONS];
+  MemConfig               m_WriteConfig[MEM_CONFIGURATIONS];
+  MemConfig const&        m_CurrentReadConfig;
+  MemConfig &             m_CurrentWriteConfig;
+
+  mutable DebuggerState   m_Debugger;
+  std::vector<std::unique_ptr<MemoryMappedDevice> >
+                          m_Devices;
+protected:
+  int                     CurrentInstructionPC;
+
 public:
                           C64MachineState();
   virtual                 ~C64MachineState();
@@ -116,25 +197,17 @@ public:
   inline byte             getByte(int offset) { return m_Mem[offset]; }
   inline void             putByte(int offset, byte value) { m_Mem[offset] = value; }
   void                    connectDevice(MemoryMappedDevice* device);
+  CPUState                getCPUState() const;
+  void                    restoreCPUState(CPUState const& cpustate);
+  Snapshot*               getSnapshot() const;
+  void                    restoreSnapshot(Snapshot* snapshot);
 
   // MEMORY ACCESSORS: These do not trap
-  struct ReadWrite {
-    byte&       m_Out;
-    byte const& m_In;
-
-    ReadWrite(byte& in_out) : m_Out(in_out), m_In(in_out) {
-    }
-
-    // read-modify-write ctor: output address may be different from input
-    ReadWrite(byte& out, byte const& in) : m_Out(out), m_In(in) {
-    }
-  };
-
-  inline byte const& _MEM(int address) const {
+  virtual byte const& _MEM(int address) const {
     return m_Mem[address];
   }
 
-  inline byte& _MEM(int address) {
+  virtual byte& _MEM(int address) {
     return m_Mem[address];
   }
 
@@ -187,72 +260,20 @@ public:
     return (((_MEM(LO()) | (_MEM((LO() + 1) & 0xff) << 8)) + 0) & 0xffff);
   }
 
-  inline byte FETCH() {
-    return _MEM(PC++);
+  inline byte FETCH() const {
+    return _MEM(PC);
   }
 
   inline void SETPC(int addr) {
     PC = addr;
   }
 
-  enum CPUFlags {
-    FN = 0x80,
-    FV = 0x40,
-    FU = 0x20, // Unused
-    FB = 0x10,
-    FD = 0x08,
-    FI = 0x04,
-    FZ = 0x02,
-    FC = 0x01
-  };
-
-  struct CPUState {
-    byte                A;
-    byte                X;
-    byte                Y; 
-    byte                SP; 
-    byte                SR; 
-    int                 PC;
-    bool                BRK;
-    bool                IRQ;
-    bool                NMI;
-    bool                _NMI;
-  };
-
-  struct Snapshot {
-    CPUState            m_CPUState;
-    byte                m_Mem[65536];
-  };
-
-  CPUState              getCPUState() const;
-  void                  restoreCPUState(CPUState const& cpustate);
-  Snapshot*             getSnapshot() const;
-  void                  restoreSnapshot(Snapshot* snapshot);
-
-  byte                  A;
-  byte                  X;
-  byte                  Y; 
-  byte                  SP; 
-  byte                  SR; 
-  int                   PC;
-  bool                  BRK;
-  bool                  IRQ;
-  bool                  NMI;
-  bool                  _NMI;
-
-  byte                  m_Mem[65536];
-  mutable DebuggerState m_Debugger;
-  std::vector<std::unique_ptr<MemoryMappedDevice> >
-                        m_Devices;
-protected:
-  int                   CurrentInstructionPC;
 };
 
 template<typename EMUTRAITS>
 class C64MachineStateT : public C64MachineState {
 public:
   // DEBUGGER HELPERS ///////////////////
-
   inline void ADDCYCLES(int count) {
     EMUTRAITS::incrementCPUCycles(m_Debugger, count);
   }
@@ -336,7 +357,8 @@ public:
 
   inline void BRANCH() {
     ADDCYCLES(1);
-    unsigned temp = FETCH();                                         
+    unsigned temp = FETCH();
+    ++PC;
     if (temp < 0x80)                                        
     {                                                       
       ADDCYCLES(EVALPAGECROSSING(PC, PC + temp));
@@ -575,6 +597,7 @@ public:
 #endif
     CurrentInstructionPC = PC;
     unsigned char op = FETCH();
+    ++PC;
     ADDCYCLES(cpucycles_table[op]);
     switch(op)
     {
@@ -1442,9 +1465,36 @@ public:
   }
 };
 
-typedef C64MachineStateT<EmuTraits<false, false, DebuggerState::TRAP_NONE> > MinimalEmu; // No C64-PLA, No cycle counting, no traps
-typedef C64MachineStateT<EmuTraits<false, true, DebuggerState::TRAP_NONE> > MinimalCycleCountingEmu; // No C64-PLA, cycle counting, no traps
-typedef C64MachineStateT<EmuTraits<true, true, DebuggerState::TRAP_ALL> > FullEmu; // C64-PLA, cycle counting, all trap types
+template<typename EMUTRAITS, bool ENABLE_PLA>
+class C64MemoryMapperT;
+
+template<typename EMUTRAITS>
+class C64MemoryMapperT<EMUTRAITS, false> : public C64MachineStateT<EMUTRAITS>
+{
+};
+
+template<typename EMUTRAITS>
+class C64MemoryMapperT<EMUTRAITS, true> : public C64MachineStateT<EMUTRAITS>
+{
+public:
+  virtual byte const& _MEM(int address) const override {
+    auto pThis = (C64MachineState const*)this;
+    int page    = address >> 8;
+    int offset  = address & pThis->m_CurrentReadConfig.m_PageMask[page];
+    return *(pThis->m_CurrentReadConfig.m_PageTable[page] + offset);
+  }
+
+  virtual byte& _MEM(int address) override {
+    auto pThis = (C64MachineState*)this;
+    int page    = address >> 8;
+    int offset  = address & pThis->m_CurrentWriteConfig.m_PageMask[page];
+    return *(pThis->m_CurrentWriteConfig.m_PageTable[page] + offset);
+  }
+};
+
+typedef C64MemoryMapperT<EmuTraits<false, DebuggerState::TRAP_NONE>, false> MinimalEmu; // No C64-PLA, No cycle counting, no traps
+typedef C64MemoryMapperT<EmuTraits<true , DebuggerState::TRAP_NONE>, false> MinimalCycleCountingEmu; // No C64-PLA, cycle counting, no traps
+typedef C64MemoryMapperT<EmuTraits<true , DebuggerState::TRAP_ALL >, true>  FullEmu; // C64-PLA, cycle counting, all trap types
 
 }
 

@@ -55,7 +55,35 @@ void DebuggerState::init() {
   m_CPUCycles = 0;
 }
 
-C64MachineState::C64MachineState() {
+MemConfig::MemConfig() {
+  for (int i = 0; i < 256; ++i) {
+    m_PageMask[i]   = 0xff;
+    m_PageTable[i]  = nullptr;
+  }
+};
+
+void MemConfig::init(byte* ram_base) {
+  assert(ram_base);
+  for (int i = 0; i < 256; ++i) {
+    m_PageMask[i]   = 0xff;
+    m_PageTable[i]  = ram_base + 256 * i;
+  }
+}
+
+void MemConfig::setPageConfig(int page_index, byte* page, byte pagemask) {
+  assert(page_index >= 0 && page_index < 256);
+  m_PageMask[page_index]  = pagemask;
+  m_PageTable[page_index] = page;
+}
+
+C64MachineState::C64MachineState() : 
+  m_CurrentReadConfig(m_ReadConfig[MEM_DEFAULT_CONFIGURATION]), 
+  m_CurrentWriteConfig(m_WriteConfig[MEM_DEFAULT_CONFIGURATION]) 
+{
+  for (int i = 0; i < MEM_CONFIGURATIONS; ++i) {
+    m_ReadConfig[i].init(m_Mem);
+    m_WriteConfig[i].init(m_Mem);
+  }
   m_Debugger.setMachineState(this);
   clearMem();
   softReset();
