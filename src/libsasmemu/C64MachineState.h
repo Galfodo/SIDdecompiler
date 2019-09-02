@@ -105,18 +105,6 @@ public:
   virtual void  update(int delta_cycles) = 0;
 };
 
-struct ReadWrite {
-  byte&       m_Out;
-  byte const& m_In;
-
-  ReadWrite(byte& in_out) : m_Out(in_out), m_In(in_out) {
-  }
-
-  // read-modify-write ctor: output address may be different from input
-  ReadWrite(byte& out, byte const& in) : m_Out(out), m_In(in) {
-  }
-};
-
 class C64MachineState {
 public:
   enum CPUFlags {
@@ -141,6 +129,19 @@ public:
     bool                  IRQ;
     bool                  NMI;
     bool                  _NMI;
+  };
+
+  // This struct wraps references to memory for read-modify-write instructions (e.g inc, dec, asl, rol etc)
+  struct ReadWritePair {
+    byte&       m_Out;
+    byte const& m_In;
+
+    ReadWritePair(byte& in_out) : m_Out(in_out), m_In(in_out) {
+    }
+
+    // read-modify-write ctor: output address may be different from input
+    ReadWritePair(byte& out, byte const& in) : m_Out(out), m_In(in) {
+    }
   };
 
   struct Snapshot {
@@ -203,12 +204,97 @@ public:
   void                    restoreSnapshot(Snapshot* snapshot);
 
   // MEMORY ACCESSORS: These do not trap
+  //virtual byte const& _MEM(int address) const {
+  //  return m_Mem[address];
+  //}
+
+  //virtual byte& _MEM(int address) {
+  //  return m_Mem[address];
+  //}
+
+  inline void SETPC(int addr) {
+    PC = addr;
+  }
+
+};
+
+template<bool ENABLE_PLA>
+struct C64MemoryMapperT;
+
+// With this configuration, no devices can be mapped into memory
+// Only 64K RAM is seen by the CPU
+template<>
+struct C64MemoryMapperT<false>
+{
+  static inline byte const& _MEM(C64MachineState const& machine, int address) {
+    return machine.m_Mem[address];
+  }
+
+  static inline byte& _MEM(C64MachineState& machine, int address) {
+    return machine.m_Mem[address];
+  }
+};
+
+// With this configuration, memory mapped devices can be used
+template<>
+struct C64MemoryMapperT<true>
+{
+  static inline byte const& _MEM(C64MachineState const& machine, int address) {
+    int page    = address >> 8;
+    int offset  = address & machine.m_CurrentReadConfig.m_PageMask[page];
+    return *(machine.m_CurrentReadConfig.m_PageTable[page] + offset);
+  }
+
+  static inline byte& _MEM(C64MachineState& machine, int address) {
+    int page    = address >> 8;
+    int offset  = address & machine.m_CurrentWriteConfig.m_PageMask[page];
+    return *(machine.m_CurrentWriteConfig.m_PageTable[page] + offset);
+  }
+};
+
+template<typename EMUTRAITS, bool USE_PLA>
+class C64MachineStateT : public C64MachineState {
+public:
+  // DEBUGGER HELPERS ///////////////////
+  inline void ADDCYCLES(int count) {
+    EMUTRAITS::incrementCPUCycles(m_Debugger, count);
+  }
+
+  inline void WRITE(int addr) {
+    EMUTRAITS::traceWrite(m_Debugger, PC, addr);
+  }
+
+  inline void READ(int addr) const {
+    EMUTRAITS::traceRead(m_Debugger, PC, addr);
+  }
+
+  inline void CHECKUNDERFLOW() const {
+    EMUTRAITS::traceStackUnderflow(m_Debugger, PC-1, SP);
+  }
+
+  inline void CHECKOVERFLOW() const {
+    EMUTRAITS::traceStackOverflow(m_Debugger, PC-1, SP);
+  }
+
+  inline void HALT(int addr) {
+    EMUTRAITS::traceHalt(m_Debugger, addr);
+  }
+
+  inline void CHECKBREAKPOINTS() {
+    EMUTRAITS::traceExecute(m_Debugger, PC);
+  }
+
+  inline void NOTIMPLEMENTED(byte opcode, int addr) {
+    fprintf(stderr, "Unimplemented opcode: %02x at address $%04x\n", (int)opcode, (int)addr);
+  }
+
+  //MEMORY ACCESSORS: These do not trap
   virtual byte const& _MEM(int address) const {
-    return m_Mem[address];
+    return C64MemoryMapperT<USE_PLA>::_MEM(*this, address);
   }
 
   virtual byte& _MEM(int address) {
-    return m_Mem[address];
+    return C64MemoryMapperT<USE_PLA>::_MEM(*this, address);
   }
 
   inline byte const& LO() const {
@@ -264,50 +350,7 @@ public:
     return _MEM(PC);
   }
 
-  inline void SETPC(int addr) {
-    PC = addr;
-  }
-
-};
-
-template<typename EMUTRAITS>
-class C64MachineStateT : public C64MachineState {
-public:
-  // DEBUGGER HELPERS ///////////////////
-  inline void ADDCYCLES(int count) {
-    EMUTRAITS::incrementCPUCycles(m_Debugger, count);
-  }
-
-  inline void WRITE(int addr) {
-    EMUTRAITS::traceWrite(m_Debugger, PC, addr);
-  }
-
-  inline void READ(int addr) const {
-    EMUTRAITS::traceRead(m_Debugger, PC, addr);
-  }
-
-  inline void CHECKUNDERFLOW() const {
-    EMUTRAITS::traceStackUnderflow(m_Debugger, PC-1, SP);
-  }
-
-  inline void CHECKOVERFLOW() const {
-    EMUTRAITS::traceStackOverflow(m_Debugger, PC-1, SP);
-  }
-
-  inline void HALT(int addr) {
-    EMUTRAITS::traceHalt(m_Debugger, addr);
-  }
-
-  inline void CHECKBREAKPOINTS() {
-    EMUTRAITS::traceExecute(m_Debugger, PC);
-  }
-
-  inline void NOTIMPLEMENTED(byte opcode, int addr) {
-    fprintf(stderr, "Unimplemented opcode: %02x at address $%04x\n", (int)opcode, (int)addr);
-  }
-
   // MEMORY ACCESS HELPERS: These may trap
-
   inline byte const& RMEM(int addr) const {
     READ(addr);
     return _MEM(addr);
@@ -318,10 +361,10 @@ public:
     return _MEM(addr);
   }
 
-  inline ReadWrite RMWMEM(int addr) {
+  inline ReadWritePair RMWMEM(int addr) {
     READ(addr);
     WRITE(addr);
-    return ReadWrite(WMEM(addr), RMEM(addr));
+    return ReadWritePair(WMEM(addr), RMEM(addr));
   }
 
   inline void PUSH(byte const& data) {
@@ -465,7 +508,7 @@ public:
       SR |= FC;         
   }
 
-  inline void ASL(ReadWrite rw) {                                       
+  inline void ASL(ReadWritePair const& rw) {                                       
     unsigned temp = rw.m_In;                          
     temp <<= 1;                           
     if (temp & 0x100) 
@@ -475,7 +518,7 @@ public:
     ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void LSR(ReadWrite rw) {                                       
+  inline void LSR(ReadWritePair const& rw) {                                       
     unsigned temp = rw.m_In;                          
     if (temp & 1) 
       SR |= FC;            
@@ -485,7 +528,7 @@ public:
     ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void ROL(ReadWrite rw) {                                       
+  inline void ROL(ReadWritePair const& rw) {                                       
     unsigned temp = rw.m_In;                          
     temp <<= 1;                           
     if (SR & FC) 
@@ -497,7 +540,7 @@ public:
     ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void ROR(ReadWrite rw) {                                       
+  inline void ROR(ReadWritePair const& rw) {                                       
     unsigned temp = rw.m_In;                          
     if (SR & FC) 
       temp |= 0x100;        
@@ -509,13 +552,13 @@ public:
     ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void DEC(ReadWrite rw) {                                       
+  inline void DEC(ReadWritePair const& rw) {                                       
     unsigned temp = rw.m_In;
     --temp;
     ASSIGNSETFLAGS(rw.m_Out, temp);           
   }
 
-  inline void INC(ReadWrite rw) {                                       
+  inline void INC(ReadWritePair const& rw) {                                       
     unsigned temp = rw.m_In;
     ++temp;
     ASSIGNSETFLAGS(rw.m_Out, temp);           
@@ -1465,36 +1508,9 @@ public:
   }
 };
 
-template<typename EMUTRAITS, bool ENABLE_PLA>
-class C64MemoryMapperT;
-
-template<typename EMUTRAITS>
-class C64MemoryMapperT<EMUTRAITS, false> : public C64MachineStateT<EMUTRAITS>
-{
-};
-
-template<typename EMUTRAITS>
-class C64MemoryMapperT<EMUTRAITS, true> : public C64MachineStateT<EMUTRAITS>
-{
-public:
-  virtual byte const& _MEM(int address) const override {
-    auto pThis = (C64MachineState const*)this;
-    int page    = address >> 8;
-    int offset  = address & pThis->m_CurrentReadConfig.m_PageMask[page];
-    return *(pThis->m_CurrentReadConfig.m_PageTable[page] + offset);
-  }
-
-  virtual byte& _MEM(int address) override {
-    auto pThis = (C64MachineState*)this;
-    int page    = address >> 8;
-    int offset  = address & pThis->m_CurrentWriteConfig.m_PageMask[page];
-    return *(pThis->m_CurrentWriteConfig.m_PageTable[page] + offset);
-  }
-};
-
-typedef C64MemoryMapperT<EmuTraits<false, DebuggerState::TRAP_NONE>, false> MinimalEmu; // No C64-PLA, No cycle counting, no traps
-typedef C64MemoryMapperT<EmuTraits<true , DebuggerState::TRAP_NONE>, false> MinimalCycleCountingEmu; // No C64-PLA, cycle counting, no traps
-typedef C64MemoryMapperT<EmuTraits<true , DebuggerState::TRAP_ALL >, true>  FullEmu; // C64-PLA, cycle counting, all trap types
+typedef C64MachineStateT<EmuTraits<false, DebuggerState::TRAP_NONE>, false> MinimalEmu; // No C64-PLA, No cycle counting, no traps
+typedef C64MachineStateT<EmuTraits<true , DebuggerState::TRAP_NONE>, false> MinimalCycleCountingEmu; // No C64-PLA, cycle counting, no traps
+typedef C64MachineStateT<EmuTraits<true , DebuggerState::TRAP_ALL >, true>  FullEmu; // C64-PLA, cycle counting, all trap types
 
 }
 

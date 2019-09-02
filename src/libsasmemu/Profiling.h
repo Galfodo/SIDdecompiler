@@ -2,7 +2,6 @@
 #define SASM_PROFILING_H_INCLUDED
 
 #include "DebugEvaluators.h"
-#include "C64MachineState.h"
 #include "TraceOperand.h"
 
 #include <vector>
@@ -55,7 +54,7 @@ struct MemAccessMap {
 
 struct Profiling {
 
-static void                   attachMemAccessMap(C64MachineState& emu, MemAccessMap* memAccessMap, int relocationRegionAddress, int relocationRegionSize);
+static void                   attachMemAccessMap(OperandTracerEmu& emu, MemAccessMap* memAccessMap, int relocationRegionAddress, int relocationRegionSize);
 
 };
 

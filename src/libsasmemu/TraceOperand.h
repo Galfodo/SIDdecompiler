@@ -17,7 +17,8 @@ namespace SASM {
 
 struct MemAccessMap;
 struct TraceNode;
-class C64MachineState;
+typedef FullEmu OperandTracerEmu;
+//typedef C64MachineState OperandTracerEmu;
 
 template<typename T>
 struct NodePtrT {
@@ -140,7 +141,7 @@ struct TraceNode {
   void                      addRef() {
                               ++m_RefCount;
                             }
-  bool                      isResolvable(C64MachineState& emu, int addr, int regionsize) const {
+  bool                      isResolvable(OperandTracerEmu& emu, int addr, int regionsize) const {
                               if (m_Left.get()) {
                                 if (m_Right.get()) {
                                   if (!m_Right.get()->isResolvable(emu, addr, regionsize)) {
@@ -233,7 +234,7 @@ struct AddressOperandTrace {
                                 delete this;
                               }
                             }
-  bool                      isResolvable(C64MachineState& emu, int addr, int regionsize);
+  bool                      isResolvable(OperandTracerEmu& emu, int addr, int regionsize);
   bool                      isNoTrace() {
                               return m_Lo.get() == NULL && m_Hi.get() == NULL;
                             }
@@ -259,8 +260,8 @@ struct OperandTraceState {
   TraceNode*                lookupOrigin(int addr);
   void                      addRelocAddr(std::pair<int, int> lohi);
   void                      addTraceNodePair(TraceNode* lo, TraceNode* hi);
-  void                      enableOperandTracing(C64MachineState& emu, int relocRangeStart, int relocRangeSize);
-  void                      buildRelocationTables(C64MachineState& emu, int relocRangeStart, int relocRangeSize, bool bridgeGaps = true);
+  void                      enableOperandTracing(OperandTracerEmu& emu, int relocRangeStart, int relocRangeSize);
+  void                      buildRelocationTables(OperandTracerEmu& emu, int relocRangeStart, int relocRangeSize, bool bridgeGaps = true);
   std::vector<RelocationTableDef>&
                             relocationTables() { return m_RelocationTables; }
   int                       removeOverlappingRelocationTables(int lobytes, int hibytes, int count);

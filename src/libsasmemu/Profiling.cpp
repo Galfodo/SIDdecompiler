@@ -146,7 +146,7 @@ struct MemAccessEvaluator<MemAccessMap::EXECUTE> : TraceEvaluator {
 };
 
 
-void Profiling::attachMemAccessMap(C64MachineState& emu, MemAccessMap* memAccessMap, int relocationRegionAddress, int relocationRegionSize) {
+void Profiling::attachMemAccessMap(OperandTracerEmu& emu, MemAccessMap* memAccessMap, int relocationRegionAddress, int relocationRegionSize) {
   assert(memAccessMap);
 
   emu.debugger().setMemAccessMap(memAccessMap);

@@ -41,7 +41,7 @@ void OperandTraceState::dumpStats() {
 #endif
 }
 
-bool AddressOperandTrace::isResolvable(C64MachineState& emu, int addr, int regionsize) {
+bool AddressOperandTrace::isResolvable(OperandTracerEmu& emu, int addr, int regionsize) {
   if (m_Lo.get() == NULL && m_Hi.get() == NULL) {
     return true;
   } else if (m_Lo.get() && m_Hi.get()) {
@@ -52,7 +52,7 @@ bool AddressOperandTrace::isResolvable(C64MachineState& emu, int addr, int regio
 }
 
 struct OperandTracer : public TraceEvaluator {
-  OperandTracer(C64MachineState& emu, OperandTraceState* opTraceState, int addr, int regionsize) : m_OperandTraceState(opTraceState), m_RegionAddress(addr), m_RegionSize(regionsize), m_Emu(emu) {
+  OperandTracer(OperandTracerEmu& emu, OperandTraceState* opTraceState, int addr, int regionsize) : m_OperandTraceState(opTraceState), m_RegionAddress(addr), m_RegionSize(regionsize), m_Emu(emu) {
   }
 
   void addUnresolvable(AddressOperandTrace const& tr) {
@@ -100,14 +100,15 @@ struct OperandTracer : public TraceEvaluator {
   OperandTraceState*  m_OperandTraceState;
   int                 m_RegionAddress;
   int                 m_RegionSize;
-  C64MachineState&    m_Emu;
+  OperandTracerEmu&   m_Emu;
 };
 
 struct ExecuteTracer2 : OperandTracer {
-  ExecuteTracer2(C64MachineState& emu, OperandTraceState* opTraceState, int addr, int regionsize) : OperandTracer(emu, opTraceState, addr, regionsize) {
+  ExecuteTracer2(OperandTracerEmu& emu, OperandTraceState* opTraceState, int addr, int regionsize) : OperandTracer(emu, opTraceState, addr, regionsize) {
   }
 
-  int eval(C64MachineState& emu, int addr) override {
+  int eval(C64MachineState& emu_, int addr) override {
+    OperandTracerEmu& emu = (OperandTracerEmu&)emu_;
     //if (addr == 0xcd2a) {
     //  int debug = 0;
     //}
@@ -357,7 +358,7 @@ TraceNode* OperandTraceState::lookupOrigin(int addr) {
   return m_CurrentTraces[addr].get();
 }
 
-void OperandTraceState::buildRelocationTables(C64MachineState& emu, int relocRangeStart, int relocRangeSize, bool bridgeGaps) {
+void OperandTraceState::buildRelocationTables(OperandTracerEmu& emu, int relocRangeStart, int relocRangeSize, bool bridgeGaps) {
   printf("TraceNode pairs: %d\n", (int)m_TraceNodePairs.size());
   for (auto it = m_TraceNodePairs.begin(); it != m_TraceNodePairs.end(); ++it) {
 
@@ -567,7 +568,7 @@ int OperandTraceState::removeOverlappingRelocationTables(Disassembler::AddressTa
   return removeOverlappingRelocationTables(tbl->m_LoAddr, tbl->m_HiAddr, tbl->m_Size);
 }
 
-void OperandTraceState::enableOperandTracing(C64MachineState& emu, int relocRangeStart, int relocRangeSize) {
+void OperandTraceState::enableOperandTracing(OperandTracerEmu& emu, int relocRangeStart, int relocRangeSize) {
   emu.debugger().registerTraceExecuteEvaluator(new ExecuteTracer2(emu, this, relocRangeStart, relocRangeSize), 0, 65536, true);
 }
 
