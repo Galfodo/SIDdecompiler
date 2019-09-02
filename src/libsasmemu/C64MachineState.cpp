@@ -39,16 +39,6 @@ template<> void traceHaltT<true>(DebuggerState& db, int addr) {
   db.traceHalt(addr);
 }
 
-MemoryMappedDevice::MemoryMappedDevice() : m_MachineState(nullptr) {
-}
-
-MemoryMappedDevice::~MemoryMappedDevice() {
-}
-
-void MemoryMappedDevice::onAttach(C64MachineState& machine) {
-  m_MachineState = &machine;
-}
-
 void DebuggerState::init() {
   m_Trapped   = 0;
   m_TrappedPC = 0;
@@ -67,18 +57,28 @@ void MemConfig::init(byte* ram_base) {
   for (int i = 0; i < 256; ++i) {
     m_PageMask[i]   = 0xff;
     m_PageTable[i]  = ram_base + 256 * i;
+    m_PageDevice[i] = nullptr;
   }
 }
 
-void MemConfig::setPageConfig(int page_index, byte* page, byte pagemask) {
+void MemConfig::configurePage(int page_index, byte* page_memory, MemoryMappedDevice* notify_device, byte page_mask) {
   assert(page_index >= 0 && page_index < 256);
-  m_PageMask[page_index]  = pagemask;
-  m_PageTable[page_index] = page;
+  m_PageMask[page_index]    = page_mask;
+  m_PageTable[page_index]   = page_memory;
+  m_PageDevice[page_index]  = notify_device;
+}
+
+void MemConfig::configurePages(int page_index, int page_count, bool mirror_pages, byte* page_memory, MemoryMappedDevice* notify_device, byte page_mask) {
+  assert(page_count >= 1);
+  for (int i = 0; i < page_count; ++i) {
+    configurePage(page_index + i, mirror_pages ? page_memory : page_memory + i * 256, notify_device, page_mask);
+  }
 }
 
 C64MachineState::C64MachineState() : 
-  m_CurrentReadConfig(m_ReadConfig[MEM_DEFAULT_CONFIGURATION]), 
-  m_CurrentWriteConfig(m_WriteConfig[MEM_DEFAULT_CONFIGURATION]) 
+  m_CurrentReadConfig(&m_ReadConfig[MEM_DEFAULT_CONFIGURATION]), 
+  m_CurrentWriteConfig(&m_WriteConfig[MEM_DEFAULT_CONFIGURATION]),
+  m_DeviceCount(0)
 {
   for (int i = 0; i < MEM_CONFIGURATIONS; ++i) {
     m_ReadConfig[i].init(m_Mem);
@@ -93,8 +93,10 @@ C64MachineState::~C64MachineState() {
 }
 
 void C64MachineState::attach(MemoryMappedDevice* device) {
-  m_Devices.push_back(std::unique_ptr<MemoryMappedDevice>(device));
-  device->onAttach(*this);
+  assert(m_DeviceCount < MAX_DEVICES);
+  m_Devices[m_DeviceCount++].reset(device);
+  device->m_MachineState = this;
+  device->onAttach();
 }
 
 void C64MachineState::clearMem() {
@@ -124,6 +126,22 @@ void C64MachineState::clearNMI() {
 void C64MachineState::setNMI() {
   NMI = true;
 }
+
+// Virtual functions: The default implementation just accesses RAM
+
+byte C64MachineState::getByte(int address) const {
+  return m_Mem[address];
+}
+
+int  C64MachineState::getWord(int address) const {
+  return m_Mem[address] | (m_Mem[address + 1] << 8);
+}
+
+void C64MachineState::putByte(int address, byte value) {
+  m_Mem[address] = value;
+}
+
+///////////////////////////////////////////////////////////////////
 
 void C64MachineState::initCPU(int addr, byte a, byte x, byte y) {
   A                       = a;

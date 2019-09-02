@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="rom">
+      <UniqueIdentifier>{45ba401d-b32e-404e-8538-3b4b6b55c058}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\libsasmemu\C64MachineState.h">
@@ -39,6 +42,24 @@
     <ClInclude Include="..\src\libsasmemu\VIC-II.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\ROM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\PLA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\MemoryMappedDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\FullEmu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\IODevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\libsasmemu\SID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\libsasmemu\DebugEvaluators.cpp">
@@ -63,6 +84,33 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\libsasmemu\VIC-II.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\ROM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\PLA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\MemoryMappedDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\FullEmu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\basic.c">
+      <Filter>rom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\chargen.c">
+      <Filter>rom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\kernal.c">
+      <Filter>rom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\IODevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libsasmemu\SID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

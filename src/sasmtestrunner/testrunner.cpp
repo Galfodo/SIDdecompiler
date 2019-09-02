@@ -30,7 +30,6 @@ TestRunner::TestRunner(const char* test_dir) : m_TestDir(test_dir), m_CurrentTes
 bool TestRunner::runTest(TestRunner::test_pf pfTest, const char* name) {
   assert(pfTest);
   m_MachineState.reset(new SASM::FullEmu());
-  m_MachineState->attach(new CIA(CIA::CIA_1));
   auto testInfo = new TestInfo(*this, name);
   m_Tests.push_back(std::unique_ptr<TestInfo>(testInfo));
   m_CurrentTest = testInfo;

@@ -152,19 +152,34 @@
     <ClInclude Include="..\src\libsasmemu\C64MachineState.h" />
     <ClInclude Include="..\src\libsasmemu\DebugEvaluators.h" />
     <ClInclude Include="..\src\libsasmemu\DebuggerState.h" />
+    <ClInclude Include="..\src\libsasmemu\FullEmu.h" />
+    <ClInclude Include="..\src\libsasmemu\IODevice.h" />
+    <ClInclude Include="..\src\libsasmemu\MemoryMappedDevice.h" />
     <ClInclude Include="..\src\libsasmemu\Monitor.h" />
     <ClInclude Include="..\src\libsasmemu\CIA.h" />
+    <ClInclude Include="..\src\libsasmemu\PLA.h" />
     <ClInclude Include="..\src\libsasmemu\Profiling.h" />
+    <ClInclude Include="..\src\libsasmemu\ROM.h" />
+    <ClInclude Include="..\src\libsasmemu\SID.h" />
     <ClInclude Include="..\src\libsasmemu\TraceOperand.h" />
     <ClInclude Include="..\src\libsasmemu\VIC-II.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\libsasmemu\basic.c" />
     <ClCompile Include="..\src\libsasmemu\C64MachineState.cpp" />
+    <ClCompile Include="..\src\libsasmemu\chargen.c" />
     <ClCompile Include="..\src\libsasmemu\DebugEvaluators.cpp" />
     <ClCompile Include="..\src\libsasmemu\DebuggerState.cpp" />
+    <ClCompile Include="..\src\libsasmemu\FullEmu.cpp" />
+    <ClCompile Include="..\src\libsasmemu\IODevice.cpp" />
+    <ClCompile Include="..\src\libsasmemu\kernal.c" />
+    <ClCompile Include="..\src\libsasmemu\MemoryMappedDevice.cpp" />
     <ClCompile Include="..\src\libsasmemu\Monitor.cpp" />
     <ClCompile Include="..\src\libsasmemu\CIA.cpp" />
+    <ClCompile Include="..\src\libsasmemu\PLA.cpp" />
     <ClCompile Include="..\src\libsasmemu\Profiling.cpp" />
+    <ClCompile Include="..\src\libsasmemu\ROM.cpp" />
+    <ClCompile Include="..\src\libsasmemu\SID.cpp" />
     <ClCompile Include="..\src\libsasmemu\TraceOperand.cpp" />
     <ClCompile Include="..\src\libsasmemu\VIC-II.cpp" />
   </ItemGroup>

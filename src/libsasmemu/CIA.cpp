@@ -31,7 +31,7 @@ void CIA::Timer::update(int delta_cycles) {
   }
 }
 
-CIA::CIA(CIA::ID id) : m_ID(id) {
+CIA::CIA(CIA::ID id) : m_ID(id), m_Page(id == CIA::CIA_1 ? 0xdc : 0xdd) {
   reset();
 }
 
@@ -41,13 +41,14 @@ class CIAWriteEvaluator : public TraceEvaluator {
   }
 };
 
-void CIA::onAttach(C64MachineState& machine) {
-  MemoryMappedDevice::onAttach(machine);
-  machine.debugger().registerTraceWriteEvaluator(new CIAWriteEvaluator, 0xdc00, 256, true);
+void CIA::onAttach() {
+  configurePages(m_Page, 1, false, m_ReadData, m_WriteData, 0x0f, true);
 }
 
 void CIA::reset() {
   m_AssertInterrupt = false;
+  memset(m_ReadData, 0, sizeof(m_ReadData));
+  memset(m_WriteData, 0, sizeof(m_WriteData));
   m_TimerA.reset();
   m_TimerB.reset();
 }
@@ -55,6 +56,15 @@ void CIA::reset() {
 void CIA::update(int delta_cycles) {
   m_TimerA.update(delta_cycles);
   m_TimerB.update(delta_cycles);
+  m_ReadData[4] = m_TimerA.m_Value.m_asInt & 0xff;
+  m_ReadData[5] = (m_TimerA.m_Value.m_asInt >> 8) & 0xff;  
+  m_IsDirty = m_TimerA.m_RunMode != CIA::Timer::STOPPED;
+}
+
+void CIA::onReadAccess(int address) {
+}
+
+void CIA::onWriteAccess(int address) {
 }
 
 }

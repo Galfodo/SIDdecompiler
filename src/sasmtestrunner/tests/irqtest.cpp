@@ -10,6 +10,8 @@ bool brktest(SASM::TestInfo& test) {
     "  ldy #>irq     \n"
     "  sta $fffe     \n"
     "  sty $ffff     \n"
+    "  lda #$35      \n"
+    "  sta $01       \n"
     "  ldx #0        \n"
     "  lda #0        \n"
     "  brk           \n" // When a BRK instruction is executed, PC+2 is pushed to the stack

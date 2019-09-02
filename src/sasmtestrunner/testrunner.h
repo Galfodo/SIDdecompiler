@@ -1,8 +1,7 @@
 #ifndef SASM_TESTRUNNER_H_INCLUDED
 #define SASM_TESTRUNNER_H_INCLUDED
 
-#include "Types.h"
-#include "C64MachineState.h"
+#include "FullEmu.h"
 #include <vector>
 #include <memory>
 

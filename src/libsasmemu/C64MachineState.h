@@ -12,6 +12,7 @@
 
 #include "Types.h"
 #include "DebuggerState.h"
+#include "MemoryMappedDevice.h"
 
 #define DEBUG_EMULATOR 0
 
@@ -22,6 +23,7 @@
 namespace SASM {
 
 class Assembler;
+class MemoryMappedDevice;
 
 template<bool COUNT>      void incrementCPUCyclesT(DebuggerState& db, int count) {}
 template<bool TRAP_THIS>  void traceStackUnderflowT(DebuggerState& db, int addr, byte sp) {}
@@ -44,11 +46,13 @@ template<> void traceHaltT<true>(DebuggerState& db, int addr);
 // This class holds page pointers for a specific memory configuration
 class MemConfig {
 public:
-  byte  m_PageMask[256];      // Normally 0xff, but for memory mapped devices it could be 0x0f, 0x1f, 0x3f etc
-  byte* m_PageTable[256];     // Pointer to memory pages for the entire memory range
-  MemConfig();
-  void init(byte* ram_base);
-  void setPageConfig(int page_index, byte* page, byte pagemask = 0xff);
+  byte                m_PageMask[256];            // Normally 0xff, but for memory mapped devices it could be 0x0f, 0x1f, 0x3f etc
+  byte*               m_PageTable[256];           // Pointer to memory pages for the entire memory range
+  MemoryMappedDevice* m_PageDevice[256];          // The devices that manage each page
+                      MemConfig();
+  void                init(byte* ram_base);
+  void                configurePage(int page_index,  byte* page_memory, MemoryMappedDevice* notify_device = nullptr, byte page_mask = 0xff);
+  void                configurePages(int page_index, int page_count, bool mirror_pages, byte* page_memory, MemoryMappedDevice* notify_device = nullptr, byte page_mask = 0xff);
 };
 
 template<bool COUNT_CYCLES=false, int TRAPS = 0>
@@ -86,23 +90,6 @@ public:
     traceHaltT<(TRAPS & DebuggerState::TRAP_HALT) != 0>(db, addr);
   }
 
-};
-
-class C64MachineState;
-
-class MemoryMappedDevice {
-  C64MachineState* m_MachineState;
-protected:
-  inline C64MachineState& machine() {
-    assert(m_MachineState);
-    return *m_MachineState;
-  }
-public:
-                MemoryMappedDevice();
-  virtual       ~MemoryMappedDevice() = 0;
-  virtual void  onAttach(class C64MachineState& machine);
-  virtual void  reset() = 0;
-  virtual void  update(int delta_cycles) = 0;
 };
 
 class C64MachineState {
@@ -164,17 +151,19 @@ public:
 
   enum {
     MEM_CONFIGURATIONS = 8,
-    MEM_DEFAULT_CONFIGURATION = 7
+    MEM_DEFAULT_CONFIGURATION = 7,
+    MAX_DEVICES = 10
   };
 
   MemConfig               m_ReadConfig[MEM_CONFIGURATIONS];
   MemConfig               m_WriteConfig[MEM_CONFIGURATIONS];
-  MemConfig const&        m_CurrentReadConfig;
-  MemConfig &             m_CurrentWriteConfig;
+  MemConfig const*        m_CurrentReadConfig;
+  MemConfig *             m_CurrentWriteConfig;
 
   mutable DebuggerState   m_Debugger;
-  std::vector<std::unique_ptr<MemoryMappedDevice> >
-                          m_Devices;
+  std::unique_ptr<MemoryMappedDevice>
+                          m_Devices[MAX_DEVICES];
+  int                     m_DeviceCount;
 protected:
   int                     CurrentInstructionPC;
 
@@ -194,23 +183,14 @@ public:
   void                    loadPRG(byte const* data, int count, bool init_cpu);
   bool                    parseAssemblerAssertions(Assembler& assembler);
   inline DebuggerState&   debugger() { return m_Debugger; }
-  inline int              getWord(int offset) { return m_Mem[offset] | (m_Mem[offset + 1] << 8); }
-  inline byte             getByte(int offset) { return m_Mem[offset]; }
-  inline void             putByte(int offset, byte value) { m_Mem[offset] = value; }
   void                    connectDevice(MemoryMappedDevice* device);
   CPUState                getCPUState() const;
   void                    restoreCPUState(CPUState const& cpustate);
   Snapshot*               getSnapshot() const;
   void                    restoreSnapshot(Snapshot* snapshot);
-
-  // MEMORY ACCESSORS: These do not trap
-  //virtual byte const& _MEM(int address) const {
-  //  return m_Mem[address];
-  //}
-
-  //virtual byte& _MEM(int address) {
-  //  return m_Mem[address];
-  //}
+  virtual byte            getByte(int address)       const;
+  virtual int             getWord(int address)       const;
+  virtual void            putByte(int address, byte value);
 
   inline void SETPC(int addr) {
     PC = addr;
@@ -241,14 +221,24 @@ struct C64MemoryMapperT<true>
 {
   static inline byte const& _MEM(C64MachineState const& machine, int address) {
     int page    = address >> 8;
-    int offset  = address & machine.m_CurrentReadConfig.m_PageMask[page];
-    return *(machine.m_CurrentReadConfig.m_PageTable[page] + offset);
+    auto config = machine.m_CurrentReadConfig;
+    auto device = config->m_PageDevice[page];
+    int offset  = address & config->m_PageMask[page];
+    if (device) {
+      device->onReadAccess(address);
+    }
+    return *(config->m_PageTable[page] + offset);
   }
 
   static inline byte& _MEM(C64MachineState& machine, int address) {
     int page    = address >> 8;
-    int offset  = address & machine.m_CurrentWriteConfig.m_PageMask[page];
-    return *(machine.m_CurrentWriteConfig.m_PageTable[page] + offset);
+    auto config = machine.m_CurrentWriteConfig;
+    auto device = config->m_PageDevice[page];
+    int offset  = address & config->m_PageMask[page];
+    if (device) {
+      device->onWriteAccess(address);
+    }
+    return *(config->m_PageTable[page] + offset);
   }
 };
 
@@ -289,11 +279,11 @@ public:
   }
 
   //MEMORY ACCESSORS: These do not trap
-  virtual byte const& _MEM(int address) const {
+  byte const& _MEM(int address) const {
     return C64MemoryMapperT<USE_PLA>::_MEM(*this, address);
   }
 
-  virtual byte& _MEM(int address) {
+  byte& _MEM(int address) {
     return C64MemoryMapperT<USE_PLA>::_MEM(*this, address);
   }
 
@@ -349,6 +339,25 @@ public:
   inline byte FETCH() const {
     return _MEM(PC);
   }
+
+  inline byte GETBYTE(int address) const {
+    return _MEM(address);
+  }
+
+  inline int GETWORD(int address) const {
+    return _MEM(address) | (_MEM(address + 1) << 8);
+  }
+
+  inline void PUTBYTE(int address, byte value) {
+    _MEM(address) = value;
+  }
+
+
+  // These functions take into account the current memory configuration and can be used
+  // to read/write memory without trapping or other sideeffects
+  virtual byte             getByte(int address)       const override { return GETBYTE(address); }
+  virtual int              getWord(int address)       const override { return GETWORD(address); }
+  virtual void             putByte(int address, byte value) override { PUTBYTE(address, value); }
 
   // MEMORY ACCESS HELPERS: These may trap
   inline byte const& RMEM(int addr) const {
@@ -609,12 +618,12 @@ public:
       2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7
     };
 
-    unsigned temp = 0;
-
     CHECKBREAKPOINTS();
     if (m_Debugger.trapOccurred()) {
       return 0;
     }
+
+    auto cpuCyclesBefore = m_Debugger.m_CPUCycles;
 
     if (this->IRQ && !(this->SR & CPUFlags::FI) || // Trigger IRQ only if interrupt disable flag is not set
         this->NMI && !this->_NMI ||                // Trigger NMI only on edge
@@ -626,9 +635,9 @@ public:
       PUSH(this->BRK ? (SR | CPUFlags::FB) : (SR &~ CPUFlags::FB));
       BRK = false;
       if (this->NMI) {
-        PC = getWord(0xfffa);
+        PC = GETWORD(0xfffa);
       } else {
-        PC = getWord(0xfffe);
+        PC = GETWORD(0xfffe);
       }
       SR |= CPUFlags::FI;
       SR &= ~CPUFlags::FD;
@@ -1504,13 +1513,22 @@ public:
     printf("%s  A:%02x X:%02x Y:%02x\n", stateString.c_str(), (int)A, (int)X, (int)Y);
 #endif
     CurrentInstructionPC = PC;
+
+    // Update all dirty devices
+    int deltaCPUcycles = m_Debugger.m_CPUCycles - cpuCyclesBefore;
+    for (int i = 0; i < m_DeviceCount; ++i) {
+      if (m_Devices[i]->isDirty()) {
+        m_Devices[i]->clearDirty();
+        m_Devices[i]->update(deltaCPUcycles);
+      }
+    }
+
     return m_Debugger.trapOccurred() ? 0 : 1;
   }
 };
 
 typedef C64MachineStateT<EmuTraits<false, DebuggerState::TRAP_NONE>, false> MinimalEmu; // No C64-PLA, No cycle counting, no traps
 typedef C64MachineStateT<EmuTraits<true , DebuggerState::TRAP_NONE>, false> MinimalCycleCountingEmu; // No C64-PLA, cycle counting, no traps
-typedef C64MachineStateT<EmuTraits<true , DebuggerState::TRAP_ALL >, true>  FullEmu; // C64-PLA, cycle counting, all trap types
 
 }
 

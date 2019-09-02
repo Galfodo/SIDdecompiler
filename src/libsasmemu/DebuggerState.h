@@ -264,7 +264,9 @@ struct DebuggerState {
   void                                            init();
   void                                            dumpState();
   void                                            dumpRegs();
+  void                                            dumpPageTable(int configIndex = -1); 
   Hue::Util::String                               printRegs();
+  Hue::Util::String                               printPageTable(int configIndex = -1); // < 0 means current config
   void                                            setMemAccessMap(MemAccessMap* map);
   MemAccessMap*                                   memAccessMap() const { return m_MemAccessMap; }
 

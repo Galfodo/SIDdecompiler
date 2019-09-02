@@ -62,4 +62,22 @@ void DebuggerState::dumpState() {
   dumpRegs();
 }
 
+Hue::Util::String DebuggerState::printPageTable(int configIndex) {
+  assert(m_MachineState);
+  Hue::Util::String sTable;
+  if (configIndex < 0) {
+    configIndex = m_MachineState->m_Mem[0x01] & 0x07;
+  }
+  sTable.appendf("Page Table %02x:\n", configIndex);
+  for (int i = 0; i < 256; ++i) {
+    sTable.appendf("  Page %02X :  R:%p W:%p\n", i, m_MachineState->m_ReadConfig[configIndex].m_PageTable[i], m_MachineState->m_WriteConfig[configIndex].m_PageTable[i]);
+  }
+  return sTable;
 }
+
+void DebuggerState::dumpPageTable(int configIndex) {
+  printf("\n%s", printPageTable(configIndex).c_str());
+}
+
+}
+

@@ -2,11 +2,12 @@
 #define SASM_CIA_H_INCLUDED
 
 #include "Types.h"
-#include "C64MachineState.h"
+#include "IODevice.h"
 
 namespace SASM {
-  
-class CIA : public MemoryMappedDevice {
+
+class CIA : public IODevice {
+  int m_Page;
 public:
   struct Timer {
     union {
@@ -86,11 +87,15 @@ public:
   byte        m_TimerACtrl;
   byte        m_TimerBCtrl;
   bool        m_AssertInterrupt;
+  byte        m_ReadData[16];
+  byte        m_WriteData[16];
 
   CIA(ID id);
-  virtual void onAttach(C64MachineState& machine) override;
+  virtual void onAttach() override;
   virtual void reset() override;
   virtual void update(int delta_cycles) override;
+  virtual void onReadAccess(int address) override;
+  virtual void onWriteAccess(int address) override;
 };
 
 }

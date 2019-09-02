@@ -1,9 +1,8 @@
 #ifndef SASM_TRACEOPERAND_H_INCLUDED
 #define SASM_TRACEOPERAND_H_INCLUDED
 
-#include "Types.h"
 #include "Disassembler.h"
-#include "C64MachineState.h"
+#include "FullEmu.h"
 
 #include <utility>
 #include <map>
