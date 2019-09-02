@@ -79,6 +79,8 @@ namespace SASM { namespace Tests {
   IMPORT_TEST(simpletest);
   IMPORT_TEST(brktest);
   IMPORT_TEST(timerirqtest);
+  IMPORT_TEST(rmwtest);
+  IMPORT_TEST(iotest);
 } }
 
 
@@ -98,6 +100,8 @@ int main(int argc, char** argv) {
   RUN_TEST(simpletest);
   RUN_TEST(brktest);
   RUN_TEST(timerirqtest);
+  RUN_TEST(rmwtest);
+  RUN_TEST(iotest);
   printf("-----------------\n");
   printf("Test run complete with %d failed test%s.\n", runner.failedTests(), runner.failedTests() == 1 ? "" : "s");
   return runner.failedTests() ? -1 : 0;
