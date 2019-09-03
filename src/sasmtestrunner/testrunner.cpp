@@ -36,7 +36,7 @@ bool TestRunner::runTest(TestRunner::test_pf pfTest, const char* name) {
   pfTest(*testInfo);
   m_CurrentTest = nullptr;
   if (testInfo->success()) {
-    printf("'%s': PASSED\n", testInfo->name());
+    printf("%-30s PASSED\n", Hue::Util::String::static_printf("'%s': ", testInfo->name()).c_str());
   } else {
     std::for_each(testInfo->errors().begin(), testInfo->errors().end(), [ testInfo ](auto &error) {
       fprintf(stderr, "'%s': %s\n", testInfo->name(), error.c_str());
@@ -96,13 +96,13 @@ int main(int argc, char** argv) {
     runner(path);
 
   printf("SASM Test Runner:\n");
-  printf("-----------------\n");
+  printf("-------------------------------------------\n");
   RUN_TEST(simpletest);
   RUN_TEST(brktest);
   RUN_TEST(timerirqtest);
   RUN_TEST(rmwtest);
   RUN_TEST(iotest);
-  printf("-----------------\n");
+  printf("-------------------------------------------\n");
   printf("Test run complete with %d failed test%s.\n", runner.failedTests(), runner.failedTests() == 1 ? "" : "s");
   return runner.failedTests() ? -1 : 0;
 }

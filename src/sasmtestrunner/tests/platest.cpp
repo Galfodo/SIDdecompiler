@@ -1,7 +1,6 @@
 
 #include "testrunner.h"
 
-
 namespace SASM { namespace Tests {
 
 bool rmwtest(SASM::TestInfo& test) {

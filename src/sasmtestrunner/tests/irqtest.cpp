@@ -31,6 +31,8 @@ bool brktest(SASM::TestInfo& test) {
 bool timerirqtest(SASM::TestInfo& test) {
   auto src = 
     "  * = $1000     \n"
+    "  lda #$35      \n"
+    "  sta $01       \n"
     "  lda #<irq     \n"
     "  ldy #>irq     \n"
     "  sta $fffe     \n"
@@ -41,6 +43,8 @@ bool timerirqtest(SASM::TestInfo& test) {
     "  stx $dc05     \n"
     "  lda #$81      \n"
     "  sta $dc0d     \n"
+    "  lda #$11      \n"
+    "  sta $dc0e     \n"
     "  ldy #$00      \n"
     "loop:           \n"
     "  inx           \n"
@@ -49,13 +53,17 @@ bool timerirqtest(SASM::TestInfo& test) {
     "irq:            \n"
     "  tya           \n"
     "  beq noack     \n" // We want the interrupt to occur twice, so we only acknowledge it on the second occurrence
+    "  lda #$7f      \n"
+    "  sta $dc0d     \n"
     "  lda $dc0d     \n"
     "noack:          \n"
+    "  iny           \n"
     "  rti           \n";
 
   test.testRunner().compileAndRunString(src, "timerirqtest");
   auto machine = test.testRunner().machineState();
   SASM_TEST_ASSERT(test, machine->Y == 2);
+  SASM_TEST_ASSERT(test, machine->A == 0x81);
   return true;
 }
 

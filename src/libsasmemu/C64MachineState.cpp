@@ -120,7 +120,6 @@ void C64MachineState::setIRQ() {
 
 void C64MachineState::clearNMI() {
   NMI = false;
-  _NMI = false;
 }
 
 void C64MachineState::setNMI() {
@@ -168,7 +167,6 @@ C64MachineState::CPUState C64MachineState::getCPUState() const {
   cpustate.BRK  = this->BRK                 ;
   cpustate.IRQ  = this->IRQ                 ;
   cpustate.NMI  = this->NMI                 ;
-  cpustate._NMI = this->_NMI                ;
   return cpustate;
 }
 
@@ -183,7 +181,6 @@ void C64MachineState::restoreCPUState(CPUState const& cpustate) {
   this->BRK                   = cpustate.BRK ;
   this->IRQ                   = cpustate.IRQ ; 
   this->NMI                   = cpustate.NMI ; 
-  this->_NMI                  = cpustate._NMI;
 }
 
 C64MachineState::Snapshot* C64MachineState::getSnapshot() const {

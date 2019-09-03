@@ -115,7 +115,6 @@ public:
     bool                  BRK;
     bool                  IRQ;
     bool                  NMI;
-    bool                  _NMI;
   };
 
   // This struct wraps references to memory for read-modify-write instructions (e.g inc, dec, asl, rol etc)
@@ -145,7 +144,6 @@ public:
   bool                    BRK;
   bool                    IRQ;
   bool                    NMI;
-  bool                    _NMI;
 
   byte                    m_Mem[65536];
 
@@ -626,23 +624,28 @@ public:
     auto cpuCyclesBefore = m_Debugger.m_CPUCycles;
 
     if (this->IRQ && !(this->SR & CPUFlags::FI) || // Trigger IRQ only if interrupt disable flag is not set
-        this->NMI && !this->_NMI ||                // Trigger NMI only on edge
+        this->NMI ||                               
         this->BRK                                  // BRK instruction occurred
       )
     {
       PUSH((PC) >> 8);
       PUSH((PC) & 0xff);
       PUSH(this->BRK ? (SR | CPUFlags::FB) : (SR &~ CPUFlags::FB));
-      BRK = false;
-      if (this->NMI) {
+      if (this->NMI) { // NMI will take priority over IRQ if they happen on the same CPU cycle       
+        this->NMI = false;
         PC = GETWORD(0xfffa);
       } else {
+        this->IRQ = false;
         PC = GETWORD(0xfffe);
       }
       SR |= CPUFlags::FI;
       SR &= ~CPUFlags::FD;
       ADDCYCLES(7);
     }
+
+    // Interrupt lines must be continuously asserted by devices until
+    // the interrupt has been acknowledged.
+    NMI = IRQ = BRK = false;
 
 #if DEBUG_EMULATOR
     auto stateString = Util::formatOpcode(&m_Mem[PC], PC, true, true, true);
