@@ -106,6 +106,7 @@ int main(int argc, char** argv) {
   options.push_back(&helpOption);
   options.push_back(&versionOption);
   options.push_back(&longHelpOption);
+  excludeOutOfBoundsVariablesOption.Value = true;
   for (int i = 1; i < argc; ++i) {
     if (argv[i][0] == '-') {
       if (!options.ParseOption(i, argc, argv)) {
