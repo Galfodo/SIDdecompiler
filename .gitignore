@@ -2,3 +2,4 @@
 /bin/*
 /build/*
 /test/steintronic_sid_dump.txt
+/vs2019/sasm.vcxproj.user
