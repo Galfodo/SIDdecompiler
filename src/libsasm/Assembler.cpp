@@ -12,6 +12,8 @@
 #include <stack>
 #include <algorithm>
 
+#define SASM_16BIT_TOKEN_OPERANDS_FORCES_ABSOLUTE_ADDRESSING 1 // Should an instruction operand specified as a 16-bit value force absolute addressing, even if it is less than 256? (e.g bit $00a9 -> 2c a9 00 (absolute addressing) instead of 24 a9 00 (zp addressing, default)
+
 namespace SASM {
 
 Assembler::Assembler() {
@@ -66,11 +68,10 @@ std::vector<byte> Assembler::assemble_file(const char* filename) {
 }
 
 const char* Assembler::version() {
-  return "SASM v0.3 (C) 2017-2019 Stein Pedersen/Prosonix";
+  return "SASM v0.31 (C) 2017-2020 Stein Pedersen/Prosonix";
 }
 
 std::vector<byte> Assembler::assemble(const char* source, const char* filename) {
-  sasm_printf("%s\n", version());
   sasm_printf("Assembling file '%s'\n", filename);
   auto starttime = std::chrono::high_resolution_clock::now();
   m_AssemblyTime = 0;
@@ -80,7 +81,7 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
 
   m_LineNumber = 0;
 
-  m_CurrentFileID = addFileInfo(source, filename);
+  m_CurrentFileID = addFileInfo(filename, source);
 
   Token
     token;
@@ -97,8 +98,6 @@ std::vector<byte> Assembler::assemble(const char* source, const char* filename) 
 
   TokenList
     currentTokens;
-
-
 
   while (stream.next(token)) {
     currentTokens.clear();
@@ -891,6 +890,10 @@ Assembler::writePetsciiStringToMemory(Token const& token, bool isAscii) {
 void Assembler::parseConditionTrue(TokenList& tokens) {
 #ifdef _DEBUG
   Hue::Util::String sTokens = tokens.join(" ");
+  if (sTokens.contains("@w"))
+  {
+    int debug = 0;
+  }
 #endif
   while (!tokens.empty())
   {
@@ -1069,6 +1072,9 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
         bool
           noZP = false;
 
+        bool
+          isForceAbsolute = false;
+
         auto operands = tokens.rest(1);
         if (operands.size() == 0 || operands.at(0).equals('A') || operands.at(0).equals('a'))
         {
@@ -1076,6 +1082,11 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
         }
         else
         {
+          if (operands.at(0).equals("@w"))
+          { // 64tass syntax
+            operands.consume(1);
+            isForceAbsolute = true;
+          }
           if (operands.at(0).equals('|'))
           {
             noZP = true;
@@ -1121,10 +1132,16 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
           addrMode == AddrMode::ABSY)
         {
           int64_t address = evaluateExpression(operands, m_PC, false);
+#ifdef SASM_16BIT_TOKEN_OPERANDS_FORCES_ABSOLUTE_ADDRESSING
+          if (operands.at(0).starts_with("$00") && operands.at(0).length() == 5)
+          {
+            isForceAbsolute = true;
+          }
+#endif
           if (!noZP)
           {
             bool forceZP = operands.at(0).equals('<');
-            if ((address > 0 && address < 256) || forceZP)
+            if ((address > 0 && address < 256 && !isForceAbsolute) || forceZP)
             {
               if (opcode != Op::JMP)
               {

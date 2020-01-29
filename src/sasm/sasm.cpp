@@ -49,10 +49,16 @@ int main(int argc, char** argv) {
   for (int i = 1; i < argc; ++i) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
+      case '-':
+        if (strcmp(argv[i], "--version") == 0) goto version_;
+        if (strcmp(argv[i], "--help") == 0) goto help_;
+        goto unknown_;
       case 'v':
+      version_:
         printf("%s\n", Assembler::version());
         exit(0);
       case 'h':
+      help_:
         usage();
         exit(0);
         break;
@@ -60,6 +66,7 @@ int main(int argc, char** argv) {
         sOutname = nextArg(i, argc, argv, true);
         break;
       default:
+      unknown_:
         fprintf(stderr, "Unknown option '%s'\n", argv[i]);
         exit(-1);
       }
@@ -67,6 +74,7 @@ int main(int argc, char** argv) {
       sFilename = argv[i];
     }
   }
+  printf("%s\n", Assembler::version());
   if (sFilename.empty()) {
     printf("No input.\n");
     return 0;
