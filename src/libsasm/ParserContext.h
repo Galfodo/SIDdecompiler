@@ -25,7 +25,7 @@ public:
   ParserContext&            setPos(int pos);
   inline bool               eof() const { return m_EOF; }
   inline const char*        name() const { return m_Name.c_str(); }
-  inline ParserContext&     setName(const char* pzName) { m_Name = pzName; }
+  inline ParserContext&     setName(const char* pzName) { m_Name = pzName; return *this; }
   int                       tokenCount();
   ParserContext&            removeTokenAt(int index);
   inline void               pushstate() { pushstate(pos()); }
