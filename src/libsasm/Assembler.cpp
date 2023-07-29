@@ -551,7 +551,7 @@ int64_t eval(Assembler* assembler, bool& parse_error, TokenList& tokens, int64_t
   if (stack_error && values.size() != 1) {
 #ifdef _DEBUG
     Hue::Util::String errorline = tokens.join(" ");
-#endif|
+#endif
     parse_error = true;
     return -1;
   }
