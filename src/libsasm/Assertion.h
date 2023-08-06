@@ -16,6 +16,6 @@ public:
               Assertion(int sectionID, int64_t pc, TokenList const& expressionTokens, InputFileID file_id, TextSpan const& span);
 };
 
-}
+} // namespace SASM
 
 #endif

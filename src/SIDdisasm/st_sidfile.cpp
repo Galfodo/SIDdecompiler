@@ -22,7 +22,7 @@ public:
       this->data = NULL;
     }
   }
-  
+
   uint8_t* data;
 };
 
@@ -178,7 +178,7 @@ int SIDFile::createSID(const char* filename, const char* name, const char* autho
         {
           printf("WARNING: Song name truncated to: %s\n", sSongName.c_str());
         }
-        if (sAuthor.limit_lengthp(31)) 
+        if (sAuthor.limit_lengthp(31))
         {
           printf("WARNING: Author name truncated to: %s\n", sAuthor.c_str());
         }
@@ -231,4 +231,4 @@ cleanup:
   return error;
 }
 
-}
+} // namespace SteinTronic

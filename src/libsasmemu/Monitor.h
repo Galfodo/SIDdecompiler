@@ -125,7 +125,7 @@ private:
   C64MachineState&            m_Emu;
   GetLineDelegate*            m_GetLine;
   WriteDelegate*              m_Write;
-  std::map<Hue::Util::String, Command*> 
+  std::map<Hue::Util::String, Command*>
                               m_CommandMap;
   std::map<Hue::Util::String, Variable*>
                               m_VariableMap;
@@ -207,6 +207,6 @@ public:
   friend RecordExecutionHandler;
 };
 
-}
+} // namespace SASM
 
 #endif

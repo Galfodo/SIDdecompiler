@@ -119,7 +119,7 @@ struct DebuggerState {
   };
 
   inline const char* errorString() const {
-    return m_ErrorString.c_str(); 
+    return m_ErrorString.c_str();
   }
 
   inline void incrementCPUCycles(int count) {
@@ -130,7 +130,7 @@ struct DebuggerState {
     if (m_Trapped == 0) {
       m_Trapped                 = type;
       m_TrappedPC               = pc;
-      m_TrappedOperand          = operand; 
+      m_TrappedOperand          = operand;
       m_TrappingTraceEvaluator  = lastEvaluator;
     }
   }
@@ -282,6 +282,6 @@ struct DebuggerState {
   MemAccessMap*                                   m_MemAccessMap;
 };
 
-}
+} // namespace SASM
 
 #endif

@@ -30,4 +30,4 @@ bool TokenStream::peek(Token& token) {
   return false;
 }
 
-}
+} // namespace SASM

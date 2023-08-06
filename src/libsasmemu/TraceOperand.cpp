@@ -12,7 +12,7 @@ TraceNodePtr
   TraceNode::s_Null;
 
 #if SASM_DEBUG_TRACESTATE
-int64_t 
+int64_t
   TraceNode::s_CreateCount,
   TraceNode::s_AliveCount,
   TraceNode::s_MaxAliveCount;
@@ -491,7 +491,7 @@ void OperandTraceState::buildRelocationTables(C64MachineState& emu, int relocRan
           } else {
             break;
           }
-#else    
+#else
           break;
 #endif
         }
@@ -609,4 +609,4 @@ void OperandTraceState::cleanup() {
   m_CurrentTraces = NULL;
 }
 
-}
+} // namespace SASM

@@ -13,7 +13,6 @@ public:
   static TokenList  Tokenize(const char* source);
 };
 
-
-}
+} // namespace SASM
 
 #endif

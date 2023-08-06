@@ -18,7 +18,7 @@ struct OpcodeDef {
   Op          m_Op;
   int         m_Cycles;
   int         m_PageCrossingPenalty;
-  int         m_Opcode;       
+  int         m_Opcode;
 };
 
 class OpcodeDefs {
@@ -37,6 +37,6 @@ public:
   static OpcodeDef                      s_Opcodes[256];
 };
 
-}
+} // namespace SASM
 
 #endif

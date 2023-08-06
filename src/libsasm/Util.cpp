@@ -272,4 +272,4 @@ Hue::Util::String Util::getLastError() {
   return sResult;
 }
 
-}
+} // namespace SASM

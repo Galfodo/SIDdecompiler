@@ -41,6 +41,6 @@ public:
   static int createSID(const char* filename, const char* name, const char* author, const char* released, int sidmodel, int songs);
 };
 
-}
+} // namespace SteinTronic
 
 #endif

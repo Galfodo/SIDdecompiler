@@ -100,7 +100,7 @@ bool Parser::addFile(const char* pzFileName) {
           }
           break;
         default:
-          { 
+          {
             reportError(Hue::Util::String::static_printf("Syntax Error"), pzFileName, linecount);
           }
         }
@@ -128,4 +128,4 @@ void Parser::reportError(Hue::Util::String const& message, const char* filename,
   sasm_fprintf(stderr, "(%s,%d) error : %s\n", filename, line, message.c_str());
 }
 
-}
+} // namespace SASM

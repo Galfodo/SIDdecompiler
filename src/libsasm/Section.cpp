@@ -32,4 +32,4 @@ void Section::setORG(int64_t org) {
   m_ORG = org;
 }
 
-}
+} // namespace SASM

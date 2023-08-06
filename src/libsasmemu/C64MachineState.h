@@ -1,7 +1,7 @@
 #ifndef SASM_EMU6510_C64MACHINESTATE_H_INCLUDED
 #define SASM_EMU6510_C64MACHINESTATE_H_INCLUDED
 
-// SASM compile-time configurable 6502 emulator. Based on code from SIDDump http://csdb.dk/release/?id=152422 
+// SASM compile-time configurable 6502 emulator. Based on code from SIDDump http://csdb.dk/release/?id=152422
 // by Cadaver of Covert Bitops
 
 #include <assert.h>
@@ -173,10 +173,10 @@ public:
   struct CPUState {
     byte                A;
     byte                X;
-    byte                Y; 
-    byte                SP; 
-    byte                SR; 
-    int                 PC; 
+    byte                Y;
+    byte                SP;
+    byte                SR;
+    int                 PC;
   };
 
   struct Snapshot {
@@ -191,10 +191,10 @@ public:
 
   byte                  A;
   byte                  X;
-  byte                  Y; 
-  byte                  SP; 
-  byte                  SR; 
-  int                   PC; 
+  byte                  Y;
+  byte                  SP;
+  byte                  SR;
+  int                   PC;
   byte                  m_Mem[65536];
   mutable DebuggerState m_Debugger;
 protected:
@@ -269,229 +269,229 @@ public:
 
   // Helpers for computing instruction timing:
   inline int EVALPAGECROSSING(int baseaddr, int realaddr) { return ((((baseaddr) ^ (realaddr)) & 0xff00) ? 1 : 0); }
-  inline int EVALPAGECROSSING_ABSOLUTEX() { return (EVALPAGECROSSING(ABSOLUTE(), ABSOLUTEX()))  ; } 
+  inline int EVALPAGECROSSING_ABSOLUTEX() { return (EVALPAGECROSSING(ABSOLUTE(), ABSOLUTEX()))  ; }
   inline int EVALPAGECROSSING_ABSOLUTEY() { return (EVALPAGECROSSING(ABSOLUTE(), ABSOLUTEY()))  ; }
   inline int EVALPAGECROSSING_INDIRECTY() { return (EVALPAGECROSSING(INDIRECTZP(), INDIRECTY())); }
 
   inline void SETFLAGS(byte const& data) {
-    if (!data)                          
-      SR = (SR & ~FN) | FZ;         
-    else                                  
-      SR = (SR & ~(FN|FZ)) | (data & FN);                      
+    if (!data)
+      SR = (SR & ~FN) | FZ;
+    else
+      SR = (SR & ~(FN|FZ)) | (data & FN);
   }
 
   inline void ASSIGNSETFLAGS(byte& dest, byte const& data) {
-    dest = data;                         
-    if (!dest)                           
-      SR = (SR & ~FN) | FZ;        
-    else                                 
-      SR = (SR & ~(FN|FZ)) | (dest & FN);                       
+    dest = data;
+    if (!dest)
+      SR = (SR & ~FN) | FZ;
+    else
+      SR = (SR & ~(FN|FZ)) | (dest & FN);
   }
 
   inline void BRANCH() {
     ADDCYCLES(1);
-    temp = FETCH();                                         
-    if (temp < 0x80)                                        
-    {                                                       
+    temp = FETCH();
+    if (temp < 0x80)
+    {
       ADDCYCLES(EVALPAGECROSSING(PC, PC + temp));
-      SETPC(PC + temp);                                     
-    }                                                       
-    else                                                    
-    {                                                       
-      ADDCYCLES(EVALPAGECROSSING(PC, PC + temp - 0x100)); 
-      SETPC(PC + temp - 0x100);                             
-    }                                                       
+      SETPC(PC + temp);
+    }
+    else
+    {
+      ADDCYCLES(EVALPAGECROSSING(PC, PC + temp - 0x100));
+      SETPC(PC + temp - 0x100);
+    }
   }
 
   inline void ADC(byte const& data) {
-    unsigned tempval = data;                                             
-    if (SR & FD)                                                      
-    {                                                                    
-      temp = (A & 0xf) + (tempval & 0xf) + (SR & FC);               
-      if (temp > 0x9)                                                  
-        temp += 0x6;                                                 
-      if (temp <= 0x0f)                                                
-        temp = (temp & 0xf) + (A & 0xf0) + (tempval & 0xf0);         
-      else                                                             
-        temp = (temp & 0xf) + (A & 0xf0) + (tempval & 0xf0) + 0x10;  
-      if (!((A + tempval + (SR & FC)) & 0xff))                      
-        SR |= FZ;                                                 
-      else                                                             
-        SR &= ~FZ;                                                
-      if (temp & 0x80)                                                 
-        SR |= FN;                                                 
-      else                                                             
-        SR &= ~FN;                                                
-      if (((A ^ temp) & 0x80) && !((A ^ tempval) & 0x80))              
-        SR |= FV;                                                 
-      else                                                             
-        SR &= ~FV;                                                
-      if ((temp & 0x1f0) > 0x90) temp += 0x60;                         
-      if ((temp & 0xff0) > 0xf0)                                       
-        SR |= FC;                                                 
-      else                                                             
-        SR &= ~FC;                                                
-    }                                                                    
-    else                                                                 
-    {                                                                    
-      temp = tempval + A + (SR & FC);                               
-      SETFLAGS(temp & 0xff);                                           
-      if (!((A ^ tempval) & 0x80) && ((A ^ temp) & 0x80))              
-        SR |= FV;                                                 
-      else                                                             
-        SR &= ~FV;                                                
-      if (temp > 0xff)                                                 
-        SR |= FC;                                                 
-      else                                                             
-        SR &= ~FC;                                                
-    }                                                                    
-    A = temp;                                                            
+    unsigned tempval = data;
+    if (SR & FD)
+    {
+      temp = (A & 0xf) + (tempval & 0xf) + (SR & FC);
+      if (temp > 0x9)
+        temp += 0x6;
+      if (temp <= 0x0f)
+        temp = (temp & 0xf) + (A & 0xf0) + (tempval & 0xf0);
+      else
+        temp = (temp & 0xf) + (A & 0xf0) + (tempval & 0xf0) + 0x10;
+      if (!((A + tempval + (SR & FC)) & 0xff))
+        SR |= FZ;
+      else
+        SR &= ~FZ;
+      if (temp & 0x80)
+        SR |= FN;
+      else
+        SR &= ~FN;
+      if (((A ^ temp) & 0x80) && !((A ^ tempval) & 0x80))
+        SR |= FV;
+      else
+        SR &= ~FV;
+      if ((temp & 0x1f0) > 0x90) temp += 0x60;
+      if ((temp & 0xff0) > 0xf0)
+        SR |= FC;
+      else
+        SR &= ~FC;
+    }
+    else
+    {
+      temp = tempval + A + (SR & FC);
+      SETFLAGS(temp & 0xff);
+      if (!((A ^ tempval) & 0x80) && ((A ^ temp) & 0x80))
+        SR |= FV;
+      else
+        SR &= ~FV;
+      if (temp > 0xff)
+        SR |= FC;
+      else
+        SR &= ~FC;
+    }
+    A = temp;
   }
 
   inline void SBC(byte const& data) {
-    unsigned tempval = data;                                             
-    temp = A - tempval - ((SR & FC) ^ FC);                            
-    if (SR & FD)                                                      
-    {                                                                    
-      unsigned tempval2;                                               
-      tempval2 = (A & 0xf) - (tempval & 0xf) - ((SR & FC) ^ FC);    
-      if (tempval2 & 0x10)                                             
-        tempval2 = ((tempval2 - 6) & 0xf) | ((A & 0xf0) - (tempval & 0xf0) - 0x10);                                             
-      else                                                             
-        tempval2 = (tempval2 & 0xf) | ((A & 0xf0) - (tempval & 0xf0));                                                    
-      if (tempval2 & 0x100)                                            
-        tempval2 -= 0x60;                                            
-      if (temp < 0x100)                                                
-        SR |= FC;                                                 
-      else                                                             
-        SR &= ~FC;                                                
-      SETFLAGS(temp & 0xff);                                           
-      if (((A ^ temp) & 0x80) && ((A ^ tempval) & 0x80))               
-        SR |= FV;                                                 
-      else                                                             
-        SR &= ~FV;                                                
-      A = tempval2;                                                    
-    }                                                                    
-    else                                                                 
-    {                                                                    
-      SETFLAGS(temp & 0xff);                                           
-      if (temp < 0x100)                                                
-        SR |= FC;                                                 
-      else                                                             
-        SR &= ~FC;                                                
-      if (((A ^ temp) & 0x80) && ((A ^ tempval) & 0x80))               
-        SR |= FV;                                                 
-      else                                                             
-        SR &= ~FV;                                                
-      A = temp;                                                        
-    }                                                                    
+    unsigned tempval = data;
+    temp = A - tempval - ((SR & FC) ^ FC);
+    if (SR & FD)
+    {
+      unsigned tempval2;
+      tempval2 = (A & 0xf) - (tempval & 0xf) - ((SR & FC) ^ FC);
+      if (tempval2 & 0x10)
+        tempval2 = ((tempval2 - 6) & 0xf) | ((A & 0xf0) - (tempval & 0xf0) - 0x10);
+      else
+        tempval2 = (tempval2 & 0xf) | ((A & 0xf0) - (tempval & 0xf0));
+      if (tempval2 & 0x100)
+        tempval2 -= 0x60;
+      if (temp < 0x100)
+        SR |= FC;
+      else
+        SR &= ~FC;
+      SETFLAGS(temp & 0xff);
+      if (((A ^ temp) & 0x80) && ((A ^ tempval) & 0x80))
+        SR |= FV;
+      else
+        SR &= ~FV;
+      A = tempval2;
+    }
+    else
+    {
+      SETFLAGS(temp & 0xff);
+      if (temp < 0x100)
+        SR |= FC;
+      else
+        SR &= ~FC;
+      if (((A ^ temp) & 0x80) && ((A ^ tempval) & 0x80))
+        SR |= FV;
+      else
+        SR &= ~FV;
+      A = temp;
+    }
   }
 
   inline void CMP(byte const& src, byte const& data) {
-    temp = (src - data) & 0xff;           
-    SR = (SR & ~(FC|FN|FZ)) | (temp & FN);                  
-    if (!temp) 
-      SR |= FZ;               
-    if (src >= data) 
-      SR |= FC;         
+    temp = (src - data) & 0xff;
+    SR = (SR & ~(FC|FN|FZ)) | (temp & FN);
+    if (!temp)
+      SR |= FZ;
+    if (src >= data)
+      SR |= FC;
   }
 
-  inline void ASL(byte& data) {                                       
-    temp = data;                          
-    temp <<= 1;                           
-    if (temp & 0x100) 
-      SR |= FC;        
-    else 
-      SR &= ~FC;                    
-    ASSIGNSETFLAGS(data, temp);           
+  inline void ASL(byte& data) {
+    temp = data;
+    temp <<= 1;
+    if (temp & 0x100)
+      SR |= FC;
+    else
+      SR &= ~FC;
+    ASSIGNSETFLAGS(data, temp);
   }
 
-  inline void LSR(byte& data) {                                       
-    temp = data;                          
-    if (temp & 1) 
-      SR |= FC;            
-    else 
-      SR &= ~FC;                    
-    temp >>= 1;                           
-    ASSIGNSETFLAGS(data, temp);           
+  inline void LSR(byte& data) {
+    temp = data;
+    if (temp & 1)
+      SR |= FC;
+    else
+      SR &= ~FC;
+    temp >>= 1;
+    ASSIGNSETFLAGS(data, temp);
   }
 
-  inline void ROL(byte& data) {                                       
-    temp = data;                          
-    temp <<= 1;                           
-    if (SR & FC) 
-      temp |= 1;            
-    if (temp & 0x100) 
-      SR |= FC;        
-    else 
-      SR &= ~FC;                    
-    ASSIGNSETFLAGS(data, temp);           
+  inline void ROL(byte& data) {
+    temp = data;
+    temp <<= 1;
+    if (SR & FC)
+      temp |= 1;
+    if (temp & 0x100)
+      SR |= FC;
+    else
+      SR &= ~FC;
+    ASSIGNSETFLAGS(data, temp);
   }
 
-  inline void ROR(byte& data) {                                       
-    temp = data;                          
-    if (SR & FC) 
-      temp |= 0x100;        
-    if (temp & 1) 
-      SR |= FC;            
-    else 
-      SR &= ~FC;                    
-    temp >>= 1;                           
-    ASSIGNSETFLAGS(data, temp);           
+  inline void ROR(byte& data) {
+    temp = data;
+    if (SR & FC)
+      temp |= 0x100;
+    if (temp & 1)
+      SR |= FC;
+    else
+      SR &= ~FC;
+    temp >>= 1;
+    ASSIGNSETFLAGS(data, temp);
   }
 
-  inline void DEC(byte& data) {                                       
-    temp = data - 1;                      
-    ASSIGNSETFLAGS(data, temp);           
+  inline void DEC(byte& data) {
+    temp = data - 1;
+    ASSIGNSETFLAGS(data, temp);
   }
 
-  inline void INC(byte& data) {                                       
-    temp = data + 1;                      
-    ASSIGNSETFLAGS(data, temp);           
+  inline void INC(byte& data) {
+    temp = data + 1;
+    ASSIGNSETFLAGS(data, temp);
   }
 
-  inline void EOR(byte const& data) {                                       
-    A ^= data;                            
-    SETFLAGS(A);                          
-  }
-
-  inline void ORA(byte const& data) {                                       
-    A |= data;                            
-    SETFLAGS(A);                          
-  }
-
-  inline void AND(byte const& data) {                                       
-    A &= data;                            
+  inline void EOR(byte const& data) {
+    A ^= data;
     SETFLAGS(A);
   }
 
-  inline void BIT(byte const& data) {                                       
-    SR = (SR & ~(FN|FV)) | (data & (FN|FV));             
-    if (!(data & A)) 
-      SR |= FZ;         
-    else 
-      SR &= ~FZ;                    
+  inline void ORA(byte const& data) {
+    A |= data;
+    SETFLAGS(A);
+  }
+
+  inline void AND(byte const& data) {
+    A &= data;
+    SETFLAGS(A);
+  }
+
+  inline void BIT(byte const& data) {
+    SR = (SR & ~(FN|FV)) | (data & (FN|FV));
+    if (!(data & A))
+      SR |= FZ;
+    else
+      SR &= ~FZ;
   }
 
   virtual int runCPU(void) override
   {
-    static const int cpucycles_table[] = 
+    static const int cpucycles_table[] =
     {
-      7,  6,  0,  8,  3,  3,  5,  5,  3,  2,  2,  2,  4,  4,  6,  6, 
-      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
-      6,  6,  0,  8,  3,  3,  5,  5,  4,  2,  2,  2,  4,  4,  6,  6, 
-      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
-      6,  6,  0,  8,  3,  3,  5,  5,  3,  2,  2,  2,  3,  4,  6,  6, 
-      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
-      6,  6,  0,  8,  3,  3,  5,  5,  4,  2,  2,  2,  5,  4,  6,  6, 
-      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
-      2,  6,  2,  6,  3,  3,  3,  3,  2,  2,  2,  2,  4,  4,  4,  4, 
-      2,  6,  0,  6,  4,  4,  4,  4,  2,  5,  2,  5,  5,  5,  5,  5, 
-      2,  6,  2,  6,  3,  3,  3,  3,  2,  2,  2,  2,  4,  4,  4,  4, 
-      2,  5,  0,  5,  4,  4,  4,  4,  2,  4,  2,  4,  4,  4,  4,  4, 
-      2,  6,  2,  8,  3,  3,  5,  5,  2,  2,  2,  2,  4,  4,  6,  6, 
-      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7, 
-      2,  6,  2,  8,  3,  3,  5,  5,  2,  2,  2,  2,  4,  4,  6,  6, 
+      7,  6,  0,  8,  3,  3,  5,  5,  3,  2,  2,  2,  4,  4,  6,  6,
+      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7,
+      6,  6,  0,  8,  3,  3,  5,  5,  4,  2,  2,  2,  4,  4,  6,  6,
+      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7,
+      6,  6,  0,  8,  3,  3,  5,  5,  3,  2,  2,  2,  3,  4,  6,  6,
+      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7,
+      6,  6,  0,  8,  3,  3,  5,  5,  4,  2,  2,  2,  5,  4,  6,  6,
+      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7,
+      2,  6,  2,  6,  3,  3,  3,  3,  2,  2,  2,  2,  4,  4,  4,  4,
+      2,  6,  0,  6,  4,  4,  4,  4,  2,  5,  2,  5,  5,  5,  5,  5,
+      2,  6,  2,  6,  3,  3,  3,  3,  2,  2,  2,  2,  4,  4,  4,  4,
+      2,  5,  0,  5,  4,  4,  4,  4,  2,  4,  2,  4,  4,  4,  4,  4,
+      2,  6,  2,  8,  3,  3,  5,  5,  2,  2,  2,  2,  4,  4,  6,  6,
+      2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7,
+      2,  6,  2,  8,  3,  3,  5,  5,  2,  2,  2,  2,  4,  4,  6,  6,
       2,  5,  0,  8,  4,  4,  6,  6,  2,  4,  2,  7,  4,  4,  7,  7
     };
 
@@ -540,7 +540,7 @@ public:
       X = A;
       PC++;
       break;
-    
+
       case 0x1a:
       case 0x3a:
       case 0x5a:
@@ -548,7 +548,7 @@ public:
       case 0xda:
       case 0xfa:
       break;
-    
+
       case 0x80:
       case 0x82:
       case 0x89:
@@ -565,7 +565,7 @@ public:
       case 0xf4:
       PC++;
       break;
-    
+
       case 0x0c:
       case 0x1c:
       case 0x3c:
@@ -688,20 +688,20 @@ public:
       break;
 
       case 0x90:
-      if (!(SR & FC)) 
+      if (!(SR & FC))
         BRANCH();
-      else 
+      else
         PC++;
       break;
 
       case 0xb0:
-      if (SR & FC) 
+      if (SR & FC)
         BRANCH();
       else PC++;
       break;
 
       case 0xf0:
-      if (SR & FZ) 
+      if (SR & FZ)
         BRANCH();
       else PC++;
       break;
@@ -717,37 +717,37 @@ public:
       break;
 
       case 0x30:
-      if (SR & FN) 
+      if (SR & FN)
         BRANCH();
-      else 
+      else
         PC++;
       break;
 
       case 0xd0:
-      if (!(SR & FZ)) 
+      if (!(SR & FZ))
         BRANCH();
-      else 
+      else
       PC++;
       break;
 
       case 0x10:
-      if (!(SR & FN)) 
+      if (!(SR & FN))
         BRANCH();
-      else 
+      else
         PC++;
       break;
 
       case 0x50:
-      if (!(SR & FV)) 
+      if (!(SR & FV))
         BRANCH();
-      else 
+      else
         PC++;
       break;
 
       case 0x70:
-      if (SR & FV) 
+      if (SR & FV)
         BRANCH();
-      else 
+      else
         PC++;
       break;
 
@@ -1359,7 +1359,7 @@ public:
       case 0x02:
       HALT(PC-1);
       return 0;
-          
+
       default:
       NOTIMPLEMENTED(op, PC-1);
       return 0;
@@ -1376,6 +1376,6 @@ typedef C64MachineStateT<EmuTraits<false, DebuggerState::TRAP_NONE> > MinimalEmu
 typedef C64MachineStateT<EmuTraits<true, DebuggerState::TRAP_NONE> > MinimalCycleCountingEmu;
 typedef C64MachineStateT<EmuTraits<true, DebuggerState::TRAP_ALL> > FullEmu;
 
-}
+} // namespace SASM
 
 #endif

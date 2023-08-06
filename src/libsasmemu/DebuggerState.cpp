@@ -5,7 +5,7 @@
 
 namespace SASM {
 
-DebuggerState::DebuggerState() : 
+DebuggerState::DebuggerState() :
   m_Trapped(0),
   m_TrappedPC(0),
   m_TrappedOperand(0),
@@ -62,4 +62,4 @@ void DebuggerState::dumpState() {
   dumpRegs();
 }
 
-}
+} // namespace SASM

@@ -91,8 +91,8 @@ int main(int argc, char** argv) {
   //Parser
   //  parser;
 
-  ////parser.addFile("../../test/unified_player2.s");   
-  //parser.addFile("../../test/monty.asm");   
+  ////parser.addFile("../../test/unified_player2.s");
+  //parser.addFile("../../test/monty.asm");
 
   Assembler
     assembler;
@@ -116,6 +116,6 @@ int main(int argc, char** argv) {
   assembler.fprintErrors(stderr, max_errors);
   if (assembler.errorcount() == 0) {
     assembler.write(sOutname.c_str(), data);
-  } 
+  }
   return 0;
 }

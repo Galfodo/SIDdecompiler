@@ -23,6 +23,6 @@ public:
   int m_ORG;
 };
 
-}
+} // namespace SASM
 
 #endif

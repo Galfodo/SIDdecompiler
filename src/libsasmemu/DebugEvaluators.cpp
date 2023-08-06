@@ -195,16 +195,16 @@ parseTokenList(TokenList const& tokens) {
       }
     }
     if (valueStack.size() == 1) {
-      return valueStack.top();      
+      return valueStack.top();
     }
   }
   return NULL;
 }
 
 AssertEvaluator::AssertEvaluator(DBExpression* expr, Hue::Util::String const& text, InputFileID file_id, TextSpan const& span) :
-  m_Expression(expr), 
-  m_Text(text), 
-  m_FileID(file_id), 
+  m_Expression(expr),
+  m_Text(text),
+  m_FileID(file_id),
   m_Span(span) {
   assert(expr);
 }
@@ -231,4 +231,4 @@ AssertEvaluator* AssertEvaluator::parseAssertion(Assertion* assertion) {
   return NULL;
 }
 
-}
+} // namespace SASM

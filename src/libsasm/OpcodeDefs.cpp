@@ -304,7 +304,7 @@ protected:
       char charindex2 = tolower(charindex1);  // Register for lower case also
       if (m_Children[charindex1] == NULL) {
         assert(m_Children[charindex2] == NULL);
-        m_Children[charindex1] = new TrieNode(); 
+        m_Children[charindex1] = new TrieNode();
         m_Children[charindex2] = new TrieNode(); // We don't really need 2 nodes, but it makes for easier cleanup
       }
       m_Children[charindex1]->addNode(name, nameindex + 1, opcodedef);
@@ -333,7 +333,7 @@ static TrieNodeRoot
 static bool
   s_isOpSizeLookupInitialized;
 
-static byte 
+static byte
   s_OperandSize[256];
 
 OpcodeDef::OpcodeDef(const char* name, AddrMode addrmode, Op op, int cycles, int page_crossing_penalty) :
@@ -428,4 +428,4 @@ OpcodeDef* OpcodeDefs::getOpcodeDefForAddressingMode(std::vector<OpcodeDef*> con
   return NULL;
 }
 
-}
+} // namespace SASM

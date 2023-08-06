@@ -20,6 +20,6 @@ private:
   char const* m_pzData;
 };
 
-}
+} // namespace SASM
 
 #endif

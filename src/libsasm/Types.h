@@ -5,7 +5,7 @@
 #include "HueUtilString.h"
 
 #ifndef _MSC_VER
-#define override 
+#define override
 #endif
 
 #include <stdint.h>
@@ -34,6 +34,6 @@ struct TextSpan {
   }
 };
 
-}
+} // namespace SASM
 
 #endif

@@ -148,13 +148,13 @@ int main(int argc, char **argv)
         case 'T':
         sscanf(&argv[c][2], "%u", &seconds);
         break;
-        
+
         case 'Z':
         profiling = 1;
         break;
       }
     }
-    else 
+    else
     {
       if (!sidname) sidname = argv[c];
     }
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
     {
       char output[512];
       int time = frames - firstframe;
-      output[0] = 0;      
+      output[0] = 0;
 
       if (!timeseconds)
         sprintf(&output[strlen(output)], "| %5d | ", time);
@@ -436,7 +436,7 @@ int main(int argc, char **argv)
       // Mastervolume
       if ((frames == firstframe) || ((filt.type & 0xf) != (prevfilt.type & 0xf))) sprintf(&output[strlen(output)], "%01X ", filt.type & 0xf);
       else sprintf(&output[strlen(output)], ". ");
-      
+
       // Rasterlines / cycle count
       if (profiling)
       {
@@ -446,7 +446,7 @@ int main(int argc, char **argv)
         int rasterlinesbad = (badlines * 40 + cycles + 62) / 63;
         sprintf(&output[strlen(output)], "| %4d %02x %02x ", cycles, rasterlines, rasterlinesbad);
       }
-      
+
       // End of frame display, print info so far and copy SID registers to old registers
       sprintf(&output[strlen(output)], "|\n");
       if ((!lowres) || (!((frames - firstframe) % spacing)))
@@ -505,7 +505,3 @@ unsigned short readword(FILE *f)
   fread(&res, 2, 1, f);
   return (res[0] << 8) | res[1];
 }
-
-
-
-

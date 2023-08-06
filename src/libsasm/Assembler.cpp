@@ -56,7 +56,7 @@ std::vector<byte> Assembler::assemble_string(const char* str) {
 }
 
 std::vector<byte> Assembler::assemble_file(const char* filename) {
-  Hue::Util::String 
+  Hue::Util::String
     sContents;
 
   if (sContents.load(filename)) {
@@ -155,10 +155,10 @@ void Assembler::resolveAll()
       {
         still_unresolved.push_back(u);
       }
-      else if (u->m_Label.length()) 
+      else if (u->m_Label.length())
       {
         addLabel(u->m_Label.c_str(), value);
-      } 
+      }
       else
       {
         writeInstructionOperand(u->m_PC, u->m_Offset, value, u->m_AddrMode, u->m_FileID, u->m_Span);
@@ -282,7 +282,7 @@ typedef enum {
   HI      , //("HI"),
   PC      , //("PC"),
   NONE
-} ID; 
+} ID;
 
 }
 
@@ -298,14 +298,14 @@ static TOKID::ID getop(Token& op) {
   return (TOKID::ID)0;
 }
 
-// Function to find precedence of  
-// operators. 
+// Function to find precedence of
+// operators.
 
-static int precedence(TOKID::ID op){ 
+static int precedence(TOKID::ID op){
   switch (op) {
   case TOKID::NOT: case TOKID::NEG:
     return 15 - 2;
-  case TOKID::MUL: case TOKID::DIV: 
+  case TOKID::MUL: case TOKID::DIV:
     return 15 - 3;
   case TOKID::ADD: case TOKID::SUB:
     return 15 - 4;
@@ -333,11 +333,11 @@ static int precedence(TOKID::ID op){
     assert(0);
     return 15;
   }
-} 
+}
 
 static bool isunary(TOKID::ID op) {
   switch (op) {
-  case TOKID::NOT: case TOKID::NEG: 
+  case TOKID::NOT: case TOKID::NEG:
   case TOKID::LO: case TOKID::HI:
     return true;
   default:
@@ -428,9 +428,9 @@ void applyStackOp(bool& stack_error, std::stack<TOKID::ID>& ops, std::stack<int6
     }
 
     assert(!values.empty());
-    auto val2 = values.top(); 
-    values.pop(); 
-                  
+    auto val2 = values.top();
+    values.pop();
+
     if (values.empty()) {
       stack_error = true;
       ops.pop();
@@ -438,8 +438,8 @@ void applyStackOp(bool& stack_error, std::stack<TOKID::ID>& ops, std::stack<int6
     }
 
     assert(!values.empty());
-    auto val1 = values.top(); 
-    values.pop(); 
+    auto val1 = values.top();
+    values.pop();
 
     auto op = ops.top();
     ops.pop();
@@ -483,14 +483,14 @@ int64_t eval(Assembler* assembler, bool& parse_error, TokenList& tokens, int64_t
       op = TOKID::PC;
     }
 
-    // Current token is an opening  
-    // brace, push it to 'ops' 
+    // Current token is an opening
+    // brace, push it to 'ops'
     if (op == TOKID::LPAR) {
       ops.push(op);
       allow_unary = true;
     }
 
-    // Current token is a number, push 
+    // Current token is a number, push
     // it to stack for numbers.
     else if (token.isnumber() || token.classification() == Token::Identifier || op == TOKID::PC) {
       int64_t val = -1;
@@ -513,10 +513,10 @@ int64_t eval(Assembler* assembler, bool& parse_error, TokenList& tokens, int64_t
       }
       values.push(val);
       allow_unary = false;
-    } 
-    
-    // Closing brace encountered, solve  
-    // entire brace.     
+    }
+
+    // Closing brace encountered, solve
+    // entire brace.
     else if (op == TOKID::RPAR) {
       while (!ops.empty() && ops.top() != TOKID::LPAR) {
         applyStackOp(stack_error, ops, values);
@@ -529,23 +529,23 @@ int64_t eval(Assembler* assembler, bool& parse_error, TokenList& tokens, int64_t
     else {
       assert(op >= 0);
 
-      // While top of 'ops' has same or greater  
-      // precedence to current token, which 
-      // is an operator. Apply operator on top  
-      // of 'ops' to top two elements in values stack. 
-      while(!ops.empty() && precedence(ops.top()) >= precedence(op)) { 
+      // While top of 'ops' has same or greater
+      // precedence to current token, which
+      // is an operator. Apply operator on top
+      // of 'ops' to top two elements in values stack.
+      while(!ops.empty() && precedence(ops.top()) >= precedence(op)) {
         applyStackOp(stack_error, ops, values);
-      } 
-              
-      // Push current token to 'ops'. 
-      ops.push(op); 
+      }
+
+      // Push current token to 'ops'.
+      ops.push(op);
       allow_unary = true;
     }
   }
-  // Entire expression has been parsed at this 
-  // point, apply remaining ops to remaining 
-  // values. 
-  while(!ops.empty()) { 
+  // Entire expression has been parsed at this
+  // point, apply remaining ops to remaining
+  // values.
+  while(!ops.empty()) {
     applyStackOp(stack_error, ops, values);
   }
   if (stack_error && values.size() != 1) {
@@ -700,8 +700,8 @@ bool Assembler::isAnonymousLabelReference(Hue::Util::String& labelname, TokenLis
 void Assembler::addLabel(const char* name, int64_t value) {
   auto label = findLabel(name);
   if (label) {
-    recordError(Hue::Util::String::static_printf("Multiply defined symbol '%s' first defined in file '%s' line %d.\n", 
-      name, 
+    recordError(Hue::Util::String::static_printf("Multiply defined symbol '%s' first defined in file '%s' line %d.\n",
+      name,
       label->m_FileID, label->m_Span
     ).c_str(), m_CurrentFileID, m_LineNumber);
   } else {
@@ -843,7 +843,7 @@ byte Assembler::calculateBranch(int64_t source, int64_t target, InputFileID file
   {
     return (byte)(256 + offset);
   }
-} 
+}
 
 void Assembler::writeInstructionOperand(int64_t pc, int64_t offset, int64_t operand, AddrMode addrMode, InputFileID file_id, TextSpan const& span) {
   if (addrMode == AddrMode::REL)
@@ -874,7 +874,7 @@ void Assembler::writeInstructionOperand(int64_t pc, int64_t offset, int64_t oper
   }
 }
 
-void                                              
+void
 Assembler::writePetsciiStringToMemory(Token const& token, bool isAscii) {
   auto unquoted = token.unquoted();
   int len = unquoted.length();
@@ -899,9 +899,9 @@ void Assembler::parseConditionTrue(TokenList& tokens) {
   {
     if (tokens.at(0).starts_with(".")) {
       TokenList expr;
-      if (tokens.at(0).starts_with(".byt") || 
-          tokens.at(0).equals(".word") || 
-          tokens.at(0).equals(".text") || 
+      if (tokens.at(0).starts_with(".byt") ||
+          tokens.at(0).equals(".word") ||
+          tokens.at(0).equals(".text") ||
           tokens.at(0).equals(".null") ||
           tokens.at(0).equals(".asciiz"))
       {
@@ -1219,7 +1219,7 @@ InputFileID Assembler::addFileInfo(const char* filename, const char* contents) {
   return (InputFileID)m_InputFiles.size();
 }
 
-bool                                              
+bool
 Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column_begin, int& column_end, Token const& token) {
 #if SASM_ENABLE_DEBUGINFO
   for (int i = 0; i < (int)m_InputFiles.size(); ++i) {
@@ -1255,14 +1255,14 @@ Assembler::resolveTokenOrigin(int& inputfileID, int& linenumber, int& column_beg
   return false;
 }
 
-Assembler::InputFileInfo&                                    
+Assembler::InputFileInfo&
 Assembler::getInputFileInfo(int inputFileID) {
   --inputFileID;
   assert(inputFileID < (int)m_InputFiles.size());
   if (inputFileID < (int)m_InputFiles.size()) {
     return m_InputFiles[inputFileID];
   } else {
-    static InputFileInfo 
+    static InputFileInfo
       no_file;
 
     no_file.m_Filename  = "<no file>";
@@ -1277,4 +1277,5 @@ Assembler::getInputFileInfo(int inputFileID) {
 const char* Assembler::getInputFileName(InputFileID file_id) {
   return getInputFileInfo(file_id).m_Filename.c_str();
 }
-}
+
+} // namespace SASM

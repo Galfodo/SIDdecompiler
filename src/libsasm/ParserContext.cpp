@@ -104,4 +104,4 @@ void ParserContext::popstate() {
   m_EOF = (m_Pos >= (int)m_Tokens.size());
 }
 
-}
+} // namespace SASM

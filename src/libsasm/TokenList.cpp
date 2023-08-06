@@ -92,4 +92,4 @@ bool TokenList::match_all(char token) const {
   }
 }
 
-}
+} // namespace SASM

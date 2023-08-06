@@ -29,4 +29,4 @@ void Label::destroy(Label* label) {
   free(label);
 }
 
-}
+} // namespace SASM

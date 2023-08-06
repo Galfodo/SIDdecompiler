@@ -8,8 +8,8 @@ Assertion::Assertion(int sectionID, int64_t pc, TokenList const& expressionToken
   m_PC(pc),
   m_ExpressionTokens(expressionTokens),
   m_FileID(file_id),
-  m_Span(span) 
+  m_Span(span)
 {
 }
 
-}
+} // namespace SASM

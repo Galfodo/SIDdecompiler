@@ -32,6 +32,6 @@ public:
   int                 m_ID;
 };
 
-}
+} // namespace SASM
 
 #endif

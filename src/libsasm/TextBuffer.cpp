@@ -104,4 +104,4 @@ TextBuffer::RefCountedBuffer* TextBuffer::RefCountedBuffer::load(const char* pzF
   }
 }
 
-}
+} // namespace SASM

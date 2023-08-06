@@ -33,6 +33,6 @@ public:
   static int                calculateBranchOperand(int pc, int target);
 };
 
-}
+} // namespace SASM
 
 #endif

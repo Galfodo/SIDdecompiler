@@ -42,6 +42,6 @@ private:
   std::stack<int>           m_StateStack;
 };
 
-}
+} // namespace SASM
 
 #endif

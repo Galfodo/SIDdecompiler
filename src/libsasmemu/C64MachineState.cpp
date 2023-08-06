@@ -137,4 +137,4 @@ bool C64MachineState::parseAssemblerAssertions(Assembler& assembler) {
   return true;
 }
 
-}
+} // namespace SASM

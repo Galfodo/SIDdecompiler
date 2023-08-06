@@ -107,6 +107,6 @@ public:
   bool                                              m_CreateDebugInfo;
 };
 
-}
+} // namespace SASM
 
 #endif

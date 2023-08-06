@@ -18,6 +18,6 @@ enum class AddrMode {
   ZPY     // zp,y
 };
 
-}
+} // namespace SASM
 
 #endif
