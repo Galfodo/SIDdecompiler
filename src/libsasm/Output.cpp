@@ -56,4 +56,4 @@ int sasm_printf(const char* format, ...) {
   return ret;
 }
 
-}
+} // namespace SASM

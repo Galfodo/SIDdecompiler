@@ -49,6 +49,6 @@ public:
   Token             unquoted() const;
 };
 
-}
+} // namespace SASM
 
 #endif

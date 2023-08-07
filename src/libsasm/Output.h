@@ -13,6 +13,6 @@ int             sasm_printf(const char* format, ...);
 outputstring_pf sasm_setstdout_callback(outputstring_pf pfOutputStdout);
 outputstring_pf sasm_setstderr_callback(outputstring_pf pfOutputStderr);
 
-}
+} // namespace SASM
 
 #endif

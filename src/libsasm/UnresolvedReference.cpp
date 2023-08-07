@@ -9,8 +9,8 @@ UnresolvedReference::UnresolvedReference(int sectionID, int64_t pc, int64_t offs
   m_Offset(offset),
   m_AddrMode(addrmode),
   m_FileID(file_id),
-  m_Span(span) 
+  m_Span(span)
 {
 }
 
-}
+} // namespace SASM

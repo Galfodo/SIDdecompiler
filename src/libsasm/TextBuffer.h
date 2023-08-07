@@ -40,6 +40,6 @@ private:
   RefCountedBuffer* m_Buffer;
 };
 
-}
+} // namespace SASM
 
 #endif

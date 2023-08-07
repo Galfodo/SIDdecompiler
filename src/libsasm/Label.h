@@ -22,6 +22,6 @@ private:
   ~Label();
 };
 
-}
+} // namespace SASM
 
 #endif

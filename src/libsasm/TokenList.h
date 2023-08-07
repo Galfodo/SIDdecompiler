@@ -32,6 +32,6 @@ private:
   std::vector<Token>  m_Tokens;
 };
 
-}
+} // namespace SASM
 
 #endif

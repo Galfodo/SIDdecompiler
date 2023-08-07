@@ -83,6 +83,6 @@ enum class Op
   KIL
 };
 
-}
+} // namespace SASM
 
 #endif

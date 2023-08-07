@@ -20,5 +20,6 @@ public:
               UnresolvedReference(int sectionID, int64_t pc, int64_t offset, AddrMode addrmode, InputFileID file_id, TextSpan const& span);
 };
 
-}
+} // namespace SASM
+
 #endif

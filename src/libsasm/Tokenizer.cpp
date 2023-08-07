@@ -50,7 +50,7 @@ Tokenizer::GetToken(Token& token, char const** ppzSource, bool include_space) {
       ++pzSource;
       break;
 
-    case '>': case '<': 
+    case '>': case '<':
       // >>=
       // >>
       // >=
@@ -66,7 +66,7 @@ Tokenizer::GetToken(Token& token, char const** ppzSource, bool include_space) {
       if (*pzSource == '=') ++pzSource;
       token.m_Classification = Token::Operator;
       break;
-    case '&': case '|': 
+    case '&': case '|':
     case '+': case '-':
       ++pzSource;
       token.m_Classification = Token::Operator;
@@ -121,14 +121,14 @@ Tokenizer::GetToken(Token& token, char const** ppzSource, bool include_space) {
         token.m_Classification = Token::Operator;
       }
       break;
-    case ';': 
+    case ';':
       ++pzSource;
       while (pzSource[0] != '\r' && pzSource[0] != '\n' && pzSource[0] != '\0') {
         ++pzSource;
       }
       token.m_Classification = Token::Comment;
       break;
-    case ',': case '#': case '(': case ')': case '[': case ']': case '{': case '}': 
+    case ',': case '#': case '(': case ')': case '[': case ']': case '{': case '}':
       pzSource++;
       token.m_Classification = Token::Operator;
       break;
@@ -265,4 +265,4 @@ TokenList Tokenizer::Tokenize(const char* pzSource) {
   return tokens;
 }
 
-}
+} // namespace SASM

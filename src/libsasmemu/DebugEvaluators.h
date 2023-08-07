@@ -63,7 +63,7 @@ namespace DebugEvaluators {
   };
 
   struct ReadMem : public DBExpression {
-    ReadMem(int address); 
+    ReadMem(int address);
     virtual int eval(C64MachineState& state);
     int m_Address;
   };
@@ -81,6 +81,6 @@ private:
   TextSpan                m_Span;
 };
 
-}
+} // namespace SASM
 
 #endif
