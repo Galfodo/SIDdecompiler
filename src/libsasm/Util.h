@@ -24,7 +24,7 @@ public:
   static Hue::Util::String  formatMem(byte* data, word address, int columns);
   static inline word        calculateBranchTarget(word pc, byte operand) {
                               word target = operand;
-                              if (target > 0x80) {
+                              if (target >= 0x80) {
                                 target = target - 0x100;
                               }
                               target += pc + 2;
