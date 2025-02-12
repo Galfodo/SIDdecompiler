@@ -49,4 +49,6 @@ will find it useful too.
 
 * Groepaz for the initial gnu Makefile and Visual Studio project dumper script
 
+* Tony for reporting a bug in the disassembler
+
 Feedback and bug reports are welcome, either on csdb (https://csdb.dk/release/?id=159804) or stein.pedersen@gmail.com
